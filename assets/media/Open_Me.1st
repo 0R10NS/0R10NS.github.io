@@ -1,0 +1,7 @@
+PERINGATAN SISTEM:
+
+Jika terjadi perubahan pada ID utama pengguna, maka protokol perlindungan arsip otomatis akan aktif. Perubahan tersebut menyebabkan fragmen memori yang tertanam dalam file menjadi rentan terhadap kerusakan memori buatan.
+
+Untuk proses pemulihan, pengguna harus menginput kredensial awal dan akhir guna memicu mekanisme rekonstruksi arsip. Abaikan peringatan ini akan mengakibatkan kehilangan data permanen.
+
+[Divisi Rekayasa Memori | Arsip Orion]
