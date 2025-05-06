@@ -45,7 +45,7 @@ body { background: #000; color: #0f0; font-family: 'Space Mono', monospace; text
       <div class="loading-bar-inner" id="loadingBar"></div>
     </div>
   </div>
-</div><div class="footer">Kode Level: 7271V2</div><audio id="buttonSound" src="assets/audio/button.mp3" preload="auto"></audio> <audio id="alertSound" src="assets/audio/alert.mp3" preload="auto"></audio> <audio id="typeSound" src="assets/audio/type.mp3" preload="auto"></audio>
+</div><div class="footer">Kode Level: 7271V2</div><audio id="buttonSound" src="/assets/audio/button.mp3" preload="auto"></audio> <audio id="alertSound" src="/assets/audio/alert.mp3" preload="auto"></audio> <audio id="typeSound" src="/assets/audio/type.mp3" preload="auto"></audio>
 
 <script>
 const grid = document.getElementById("grid"),
@@ -60,9 +60,9 @@ const grid = document.getElementById("grid"),
       infoText = document.getElementById("infoText");
 
 const correctOrder = [
-  "Encryption3", "Encryption9", "Encryption1",
-  "Encryption7", "Encryption5", "Encryption2",
-  "Encryption4", "Encryption8", "Encryption6"
+  "encryption3", "encryption9", "encryption1",
+  "encryption7", "encryption5", "encryption2",
+  "encryption4", "encryption8", "encryption6"
 ];
 
 let recovered = Array(9).fill(false),
@@ -77,7 +77,7 @@ function playSound(s) {
 }
 
 function saveProgress() {
-  const gridOrder = Array.from(grid.children).map(c => c.querySelector("img").src.match(/Encryption\d+/)[0]);
+  const gridOrder = Array.from(grid.children).map(c => c.querySelector("img").src.match(/encryption\d+/)[0]);
   localStorage.setItem("level2Progress", JSON.stringify({ recovered, gridOrder }));
 }
 
@@ -96,12 +96,12 @@ function loadProgress() {
 
 function createGrid(order = null) {
   grid.innerHTML = "";
-  (order || Array.from({ length: 9 }, (_, i) => `Encryption${i + 1}`)).forEach((imgName, i) => {
+  (order || Array.from({ length: 9 }, (_, i) => `encryption${i + 1}`)).forEach((imgName, i) => {
     const cell = document.createElement("div");
     cell.className = "cell";
     cell.dataset.index = i;
     const img = document.createElement("img");
-    img.src = `assets/images/${imgName}-recovered.jpg`;
+    img.src = `/assets/images/${imgName}-recovered.jpg`;
     img.draggable = false;
     cell.appendChild(img);
     cell.onclick = () => openPopup(i);
@@ -172,7 +172,7 @@ function drop(e) {
 }
 
 function checkAnswer() {
-  const current = Array.from(grid.children).map(c => c.querySelector("img").src.match(/Encryption\d+/)[0]);
+  const current = Array.from(grid.children).map(c => c.querySelector("img").src.match(/encryption\d+/)[0]);
   if (JSON.stringify(current) === JSON.stringify(correctOrder)) {
     playSound(buttonSound);
     grid.classList.add("unified");
@@ -198,7 +198,7 @@ function animateLoadingText() {
 }
 
 function checkIfSolvedVisually() {
-  const current = Array.from(grid.children).map(c => c.querySelector("img").src.match(/Encryption\d+/)[0]);
+  const current = Array.from(grid.children).map(c => c.querySelector("img").src.match(/encryption\d+/)[0]);
   grid.classList.toggle("unified", JSON.stringify(current) === JSON.stringify(correctOrder));
 }
 
