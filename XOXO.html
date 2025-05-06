@@ -1,0 +1,283 @@
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tic Tac Toe</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #f4f4f4;
+      font-family: Arial, sans-serif;
+      flex-direction: column;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 5px;
+    }
+    .cell {
+      background: #fff;
+      border: 2px solid #333;
+      font-size: 2rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.5s;
+    }
+    .winner-x {
+      background-color: #ffcccc !important;
+    }
+    .winner-o {
+      background-color: #ccffcc !important;
+    }
+    .draw-x {
+      background-color: #ffeeee !important;
+      color: red !important;
+    }
+    .draw-o {
+      background-color: #eaffea !important;
+      color: green !important;
+    }
+    .status {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 1.5rem;
+    }
+    .controls {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .controls button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    #popup {
+      display: none;
+      position: fixed;
+      background: #fff;
+      border: 2px solid #333;
+      padding: 20px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      z-index: 10;
+    }
+    #popup input {
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      font-size: 1rem;
+    }
+    #popup button {
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="board" id="board"></div>
+  <div class="status" id="status"></div>
+  <div class="controls">
+    <button onclick="toggleMode()" id="modeBtn">Mode: 2 Players</button>
+    <button onclick="startGame()">Restart</button>
+    <button onclick="window.location.href='level-4a2.html'">Kembali</button>
+  </div>
+
+  <audio id="buttonSound" src="assets/audio/button.mp3"></audio>
+  <audio id="winSound" src="assets/audio/Get.mp3"></audio>
+
+  <script>
+    const boardEl = document.getElementById("board");
+    const statusEl = document.getElementById("status");
+    const modeBtn = document.getElementById("modeBtn");
+    const buttonSound = document.getElementById("buttonSound");
+    const winSound = document.getElementById("winSound");
+
+    let board = Array(9).fill("");
+    let currentPlayer = "X";
+    let gameOver = false;
+    let vsAI = false;
+
+    function playButtonSound() {
+      buttonSound.currentTime = 0;
+      buttonSound.play();
+    }
+
+    function playWinSound() {
+      winSound.currentTime = 0;
+      winSound.play();
+    }
+
+    function toggleMode() {
+      playButtonSound();
+      vsAI = !vsAI;
+      modeBtn.textContent = vsAI ? "Mode: vs AI" : "Mode: 2 Players";
+      startGame();
+    }
+
+    function startGame() {
+      board = Array(9).fill("");
+      currentPlayer = "X";
+      gameOver = false;
+      statusEl.textContent = "Player X's turn";
+      render();
+    }
+
+    function render() {
+      boardEl.innerHTML = "";
+      board.forEach((cell, i) => {
+        const cellEl = document.createElement("div");
+        cellEl.classList.add("cell");
+        cellEl.textContent = cell;
+        cellEl.addEventListener("click", () => handleClick(i));
+        boardEl.appendChild(cellEl);
+      });
+    }
+
+    function handleClick(index) {
+      if (board[index] || gameOver) return;
+      playButtonSound();
+      board[index] = currentPlayer;
+      render();
+
+      const winPattern = checkWinner();
+      if (winPattern) {
+        statusEl.textContent = `Player ${currentPlayer} wins!`;
+        highlightWinner(winPattern);
+        playWinSound();
+        gameOver = true;
+        if (vsAI) setTimeout(clearAndRestart, 2000);
+        return;
+      } else if (board.every(cell => cell)) {
+        statusEl.textContent = "It's a draw!";
+        gameOver = true;
+        highlightDraw();
+        if (vsAI) setTimeout(clearAndRestart, 2000);
+        return;
+      }
+
+      currentPlayer = currentPlayer === "X" ? "O" : "X";
+      statusEl.textContent = `Player ${currentPlayer}'s turn`;
+
+      if (vsAI && currentPlayer === "O") {
+        setTimeout(aiMove, 500);
+      }
+    }
+
+    function highlightWinner(pattern) {
+      pattern.forEach(i => {
+        const cell = boardEl.children[i];
+        cell.classList.add(currentPlayer === "X" ? "winner-x" : "winner-o");
+      });
+    }
+
+    function highlightDraw() {
+      board.forEach((mark, i) => {
+        const cell = boardEl.children[i];
+        if (mark === "X") {
+          cell.classList.add("draw-x");
+        } else if (mark === "O") {
+          cell.classList.add("draw-o");
+        }
+      });
+    }
+
+    function aiMove() {
+      const best = findBestMove();
+      handleClick(best);
+    }
+
+    function findBestMove() {
+      let bestScore = -Infinity;
+      let move;
+      for (let i = 0; i < 9; i++) {
+        if (board[i] === "") {
+          board[i] = "O";
+          let score = minimax(board, 0, false);
+          board[i] = "";
+          if (score > bestScore) {
+            bestScore = score;
+            move = i;
+          }
+        }
+      }
+      return move;
+    }
+
+    function minimax(newBoard, depth, isMaximizing) {
+      const winPattern = checkWinner();
+      if (winPattern) {
+        const winner = board[winPattern[0]];
+        if (winner === "O") return 10 - depth;
+        if (winner === "X") return depth - 10;
+      }
+      if (newBoard.every(cell => cell)) return 0;
+
+      if (isMaximizing) {
+        let bestScore = -Infinity;
+        for (let i = 0; i < 9; i++) {
+          if (newBoard[i] === "") {
+            newBoard[i] = "O";
+            let score = minimax(newBoard, depth + 1, false);
+            newBoard[i] = "";
+            bestScore = Math.max(score, bestScore);
+          }
+        }
+        return bestScore;
+      } else {
+        let bestScore = Infinity;
+        for (let i = 0; i < 9; i++) {
+          if (newBoard[i] === "") {
+            newBoard[i] = "X";
+            let score = minimax(newBoard, depth + 1, true);
+            newBoard[i] = "";
+            bestScore = Math.min(score, bestScore);
+          }
+        }
+        return bestScore;
+      }
+    }
+
+    function checkWinner() {
+      const winPatterns = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8],
+        [0, 3, 6], [1, 4, 7], [2, 5, 8],
+        [0, 4, 8], [2, 4, 6],
+      ];
+      for (let pattern of winPatterns) {
+        const [a, b, c] = pattern;
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+          return pattern;
+        }
+      }
+      return null;
+    }
+
+    function clearAndRestart() {
+      const cells = Array.from(boardEl.children);
+      cells.forEach((cell, i) => {
+        setTimeout(() => {
+          cell.textContent = "";
+          cell.className = "cell";
+          if (i === cells.length - 1) {
+            setTimeout(startGame, 300);
+          }
+        }, i * 100);
+      });
+    }
+
+    startGame();
+  </script>
+  <div class="footer">
+    Kode Level: XOXO
+  </div>
+</body>
+</html>

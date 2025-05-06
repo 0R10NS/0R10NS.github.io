@@ -1,0 +1,281 @@
+<!DOCTYPE html><html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Meja - Investigasi</title>
+  <style>
+    @font-face {
+      font-family: 'Handwriting';
+      src: url('assets/media/handwriting.otf');
+    }
+    body {
+      margin: 0;
+      background: #000;
+      color: #0f0;
+      font-family: monospace;
+    }
+
+    #background {
+      width: 320px;
+      height: 320px;
+      background: url('assets/images/meja-1.png') center/cover no-repeat;
+      margin: 40px auto;
+      position: relative;
+      border: 2px solid #0f0;
+    }
+
+    .item {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background-size: cover;
+      background-position: center;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .item:active {
+      transform: translateY(-50%) scale(0.95);
+    }
+
+    #handphone {
+      left: 0;
+      width: 60px;
+      height: 90px;
+      background-image: url('assets/images/handphone.png');
+    }
+
+    #catatan {
+      left: 50%;
+      width: 100px;
+      height: 150px;
+      transform: translate(-50%, -50%);
+      background-image: url('assets/images/catatan.png');
+    }
+
+    #foto {
+      right: 0;
+      width: 100px;
+      height: 150px;
+      background-image: url('assets/images/foto.png');
+    }
+
+    #popup, #imagePopup, #notePopup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.9);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      flex-direction: column;
+    }
+
+    #popupContent {
+      max-width: 500px;
+      white-space: pre-line;
+      color: #0f0;
+      text-align: center;
+      padding: 40px;
+    }
+
+    #noteContainer {
+      perspective: 1000px;
+    }
+
+    #notePage {
+      width: 320px;
+      height: 480px;
+      background-size: cover;
+      background-position: center;
+      font-family: 'Handwriting', cursive;
+      color: #000;
+      font-size: 16px;
+      padding: 20px;
+      box-sizing: border-box;
+      text-align: left;
+      line-height: 1.6;
+      transition: transform 0.4s ease, opacity 0.4s ease;
+      border: 1px solid #222;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.6);
+    }
+
+    .navBtn {
+      margin: 10px;
+      background: #000;
+      color: #0f0;
+      border: 1px solid #0f0;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+
+    #backBtn {
+      display: block;
+      margin: 20px auto;
+      background: #000;
+      color: #0f0;
+      border: 1px solid #0f0;
+      padding: 10px 20px;
+      cursor: pointer;
+      z-index: 1000;
+      position: relative;
+    }
+
+    #popupImage {
+      max-width: 90%;
+      max-height: 90%;
+    }
+  </style>
+</head>
+<body>
+  <div id="background">
+    <div id="handphone" class="item"></div>
+    <div id="catatan" class="item"></div>
+    <div id="foto" class="item"></div>
+  </div>
+
+  <button id="backBtn">Kembali</button>
+
+  <div id="popup">
+    <div id="popupContent"></div>
+    <button class="navBtn" id="closePopupBtn">Tutup</button>
+  </div>
+
+  <div id="notePopup">
+    <div id="noteContainer">
+      <div id="notePage"></div>
+    </div>
+    <div>
+      <button class="navBtn" id="prevPage">&lt;</button>
+      <button class="navBtn" id="nextPage">&gt;</button>
+      <button class="navBtn" id="closeNoteBtn" style="display:none;">Tutup Catatan</button>
+    </div>
+  </div>
+
+  <div id="imagePopup">
+    <img id="popupImage" src="" alt="popup image">
+    <button class="navBtn" id="closeImageBtn">Tutup</button>
+  </div>
+
+  <audio id="clickSound" src="assets/audio/button.mp3"></audio>
+
+  <script>
+    const popup = document.getElementById('popup');
+    const popupContent = document.getElementById('popupContent');
+    const clickSound = document.getElementById('clickSound');
+
+    const notePopup = document.getElementById('notePopup');
+    const notePage = document.getElementById('notePage');
+    const prevPage = document.getElementById('prevPage');
+    const nextPage = document.getElementById('nextPage');
+    const closeNoteBtn = document.getElementById('closeNoteBtn');
+
+    const imagePopup = document.getElementById('imagePopup');
+    const popupImage = document.getElementById('popupImage');
+
+    const pages = [
+      {
+        bg: 'assets/images/catatan-hal1.png',
+        text: "Jika kau membaca ini, maka kebenaran sudah mulai menelan segalanya. Aku pernah mempercayai cahaya… tapi mereka yang bermain dengan ingatan tak pernah benar-benar tidur. Jawabannya tak tertulis di data—melainkan di luka, di tempat kita biasa menghilang dari dunia."
+      },
+      {
+        bg: 'assets/images/catatan-hal2.png',
+        text: "Semua potongan sudah ada… tapi kamu masih belum melihatnya, bukan? Kembali ke awal—bukan untuk mengulang, tapi untuk membuka pintu yang dulu tertutup. Meja itu... percakapan itu... mereka menyimpan kunci yang hanya muncul ketika semuanya telah kamu genggam. Kau tahu ke mana harus kembali."
+      },
+      {
+        bg: 'assets/images/catatan-hal3.png',
+        text: "Telepon itu... selama ini cuma memutar ulang permainan, bukan? Tapi kamu tahu... segala sesuatu berubah jika kamu membawa cukup kebenaran bersamamu. Ketika tiga suara telah kau kumpulkan, dengarkan lagi nadanya. Mereka menyembunyikan jalan yang tak terlihat dari awal. Kembali ke tempat panggilan pertama dilakukan."
+      },
+      {
+        bg: 'assets/images/catatan-hal2.png',
+        text: "<b>D</b>unia ini dibentuk ulang oleh kebohongan.\n<b>R</b>ahasia disembunyikan, bukan dilupakan begitu saja.\n<b>A</b>ku tahu mereka akan menghapusku.\n<b>L</b>angkahku adalah pengorbanan, bukan pelarian.\n<b>V</b>ektor retakan selalu berasal dari dalam.\n<b>E</b>ntah kau sadar atau belum, kau dekat.\n<b>N</b>amaku mungkin lenyap, tapi pesanku tidak.\n<b>R</b>asakan jejaknya dalam sistem mereka.\n<b>I</b>ngat nama yang mereka sembunyikan.\n<b>E</b>ksperimen ini ingin menghapus masa lalu.\n<b>D</b>an hanya kamu yang bisa hentikan semua."
+      }
+    ];
+    let currentPage = 0;
+
+    function playClick() {
+      clickSound.currentTime = 0;
+      clickSound.play();
+    }
+
+    function showPopup(text) {
+      playClick();
+      popupContent.textContent = text;
+      popup.style.display = 'flex';
+    }
+
+    function showNotePage(index, direction = 0) {
+      const page = pages[index];
+      notePage.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
+      notePage.style.opacity = '0';
+      notePage.style.transform = `translateX(${direction === -1 ? '-' : ''}100%)`;
+      setTimeout(() => {
+        notePage.style.backgroundImage = `url('${page.bg}')`;
+        notePage.innerHTML = page.text;
+        notePage.style.transform = 'translateX(0)';
+        notePage.style.opacity = '1';
+      }, 200);
+      currentPage = index;
+      notePopup.style.display = 'flex';
+      closeNoteBtn.style.display = index === pages.length - 1 ? 'block' : 'none';
+      playClick();
+    }
+
+    function showImagePopup(src) {
+      popupImage.src = src;
+      imagePopup.style.display = 'flex';
+      playClick();
+    }
+
+    document.getElementById('handphone').addEventListener('click', () => {
+      showImagePopup('assets/images/hp-aktif.png');
+    });
+
+    document.getElementById('catatan').addEventListener('click', () => {
+      showNotePage(0);
+    });
+
+    document.getElementById('foto').addEventListener('click', () => {
+      showPopup("Foto David dan Selena");
+    });
+
+    document.getElementById('backBtn').addEventListener('click', () => {
+      playClick();
+      window.parent.location.reload();
+    });
+
+    document.getElementById('closePopupBtn').addEventListener('click', () => {
+      popup.style.display = 'none';
+      playClick();
+    });
+
+    closeNoteBtn.addEventListener('click', () => {
+      notePopup.style.display = 'none';
+      if (currentPage === pages.length - 1) {
+        localStorage.setItem('level-5b-bukti-3', 'catatan');
+        updateInventory();
+      }
+      playClick();
+    });
+
+    document.getElementById('closeImageBtn').addEventListener('click', () => {
+      imagePopup.style.display = 'none';
+      localStorage.setItem('level-5b-bukti-2', 'handphone');
+      updateInventory();
+      playClick();
+    });
+
+    prevPage.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (currentPage > 0) showNotePage(currentPage - 1, -1);
+    });
+
+    nextPage.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (currentPage < pages.length - 1) showNotePage(currentPage + 1, 1);
+    });
+  </script>
+</body>
+</html>

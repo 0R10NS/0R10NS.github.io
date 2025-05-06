@@ -1,0 +1,441 @@
+<!DOCTYPE html><html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Level 5b - TKP</title>
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      color: #0f0;
+      font-family: monospace;
+    }
+    h1 {
+      text-align: center;
+      margin-top: 20px;
+    }
+    p.subtext {
+      text-align: center;
+      font-size: 0.9em;
+      margin-top: -10px;
+      margin-bottom: 30px;
+    }
+    #map-container {
+      position: relative;
+      width: 320px;
+      height: 320px;
+      background: #222;
+      border: 2px solid #0f0;
+      margin: 0 auto 40px;
+    }
+    #map-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .hotspot {
+      position: absolute;
+      background-size: cover;
+      background-position: center;
+      background-color: transparent;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .hotspot:active {
+      transform: scale(0.95);
+    }
+    #overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 998;
+      display: none;
+    }
+    #messageBox {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #111;
+      color: #0f0;
+      padding: 40px;
+      box-sizing: border-box;
+      z-index: 999;
+      display: none;
+      overflow-y: auto;
+      flex-direction: column;
+      align-items: center;
+    }
+    #popupImage {
+      width: 106px;
+      height: 160px;
+      background-size: cover;
+      background-position: center;
+      margin-bottom: 20px;
+    }
+    #dialogText {
+      max-width: 500px;
+      text-align: left;
+      margin-bottom: 20px;
+      white-space: pre-line;
+    }
+    #nextBtn, #closeBtn {
+      background: #000;
+      color: #0f0;
+      border: 1px solid #0f0;
+      padding: 10px 20px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    #loadingScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      color: #0f0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    #progressBar {
+      width: 60%;
+      height: 20px;
+      background: #111;
+      border: 1px solid #0f0;
+      margin-bottom: 10px;
+      position: relative;
+    }
+    #progressFill {
+      height: 100%;
+      width: 0%;
+      background: #0f0;
+    }
+    #progressText {
+      font-size: 0.9em;
+    }
+    #inventoryBar {
+  width: 90%;
+  max-width: 600px;
+  margin: 10px auto 20px;
+  border: 1px solid #0f0;
+  padding: 10px;
+  background-color: #111;
+  color: #0f0;
+  font-size: 0.9em;
+}
+
+#inventoryBar h3 {
+  margin-top: 0;
+  text-align: center;
+}
+
+#buktiList {
+  list-style-type: square;
+  padding-left: 20px;
+}
+  </style>
+</head>
+<body>
+  <div id="loadingScreen">
+    <div id="progressBar"><div id="progressFill"></div></div>
+    <div id="progressText">memuat... (0%)</div>
+  </div>
+  <h1>Lokasi TKP</h1>
+  <p class="subtext">klik pada objek/subjek untuk mendapatkan informasi</p>
+  <div id="inventoryBar">
+  <h3>Inventory Bukti</h3>
+  <ul id="buktiList"></ul>
+</div>
+  <div id="map-container">
+    <img id="map-image" src="assets/images/tkp.png" alt="Peta TKP">
+    <button id="pintu" class="hotspot" style="top:10px; left:10px; width:106px; height:160px; background-image: url('assets/images/pintu-1.png');"></button>
+    <button id="meja" class="hotspot" style="top:104px; left:100px; width:120px; height:80px; background-image: url('assets/images/meja.png');"></button>
+    <button id="mayat" class="hotspot" style="top:185px; left:90px; width:140px; height:70px; background-image: url('assets/images/mayat.png');"></button>
+    <button id="satpam" class="hotspot" style="bottom:0; left:0; width:106px; height:160px;"></button>
+    <button id="tetangga" class="hotspot" style="bottom:0; right:0; width:106px; height:160px;"></button>
+  </div>
+  <div id="overlay"></div>
+  <div id="messageBox">
+    <div id="popupImage"></div>
+    <div id="dialogText"></div>
+    <button id="nextBtn" onclick="nextDialog()">Lanjut</button>
+  </div>
+  <audio id="clickSound" src="assets/audio/button.mp3"></audio>
+  <audio id="typeSound" src="assets/audio/type.mp3"></audio>
+  <script>
+let satpam = document.getElementById('satpam');
+let tetangga = document.getElementById('tetangga');
+let satpamToggle = true;
+let tetanggaToggle = true;
+let isDialogOpen = false;
+let animationInterval;
+let popupAnimationInterval;
+let popupToggle = true;
+
+function updateInventory() {
+  const keys = ['level-5b-bukti-1', 'level-5b-bukti-2', 'level-5b-bukti-3', 'level-5b-item1', 'level-5b-item2'];
+  const buktiList = document.getElementById('buktiList');
+  buktiList.innerHTML = '';
+
+  keys.forEach(key => {
+    const item = localStorage.getItem(key);
+    if (item) {
+      const li = document.createElement('li');
+      li.textContent = item;
+      buktiList.appendChild(li);
+    }
+  });
+}
+updateInventory();
+
+function setIdleImage() {
+  satpam.style.backgroundImage = `url('assets/images/satpam-1.png')`;
+  tetangga.style.backgroundImage = `url('assets/images/tetangga-1.png')`;
+}
+
+function startAnimation() {
+  animationInterval = setInterval(() => {
+    if (isDialogOpen) {
+      satpam.style.backgroundImage = `url('assets/images/satpam-${satpamToggle ? '1' : '2'}.png')`;
+      satpamToggle = !satpamToggle;
+      tetangga.style.backgroundImage = `url('assets/images/tetangga-${tetanggaToggle ? '1' : '2'}.png')`;
+      tetanggaToggle = !tetanggaToggle;
+    }
+  }, 500);
+}
+
+function startPopupAnimation(baseImageName) {
+  popupToggle = true;
+  popupAnimationInterval = setInterval(() => {
+    if (typing) {
+      popupImage.style.backgroundImage = `url('${baseImageName}-${popupToggle ? '1' : '2'}.png')`;
+      popupToggle = !popupToggle;
+    }
+  }, 500);
+}
+
+function stopPopupAnimation() {
+  clearInterval(popupAnimationInterval);
+}
+
+setIdleImage();
+startAnimation();
+
+const overlay = document.getElementById('overlay');
+const messageBox = document.getElementById('messageBox');
+const dialogText = document.getElementById('dialogText');
+const popupImage = document.getElementById('popupImage');
+const clickSound = document.getElementById('clickSound');
+const typeSound = document.getElementById('typeSound');
+const nextBtn = document.getElementById('nextBtn');
+
+let dialogQueue = [];
+let dialogIndex = 0;
+let typingTimer;
+let typing = false;
+
+function playClick() {
+  clickSound.currentTime = 0;
+  clickSound.play();
+}
+
+function typeWriter(text, index = 0) {
+  typing = true;
+  if (index === 0) {
+    dialogText.innerHTML = '';
+    if (popupImage.style.backgroundImage.includes('satpam')) {
+      startPopupAnimation('assets/images/satpam');
+    } else if (popupImage.style.backgroundImage.includes('tetangga')) {
+      startPopupAnimation('assets/images/tetangga');
+    }
+  }
+
+  if (index < text.length) {
+    dialogText.innerHTML += text.charAt(index);
+    typeSound.currentTime = 0;
+    typeSound.play();
+    typingTimer = setTimeout(() => typeWriter(text, index + 1), 30);
+  } else {
+    typing = false;
+    stopPopupAnimation();
+    nextBtn.textContent = dialogIndex < dialogQueue.length - 1 ? "Lanjut" : "Tutup";
+
+    if (popupImage.style.backgroundImage.includes('satpam') && dialogIndex === dialogQueue.length - 1) {
+      localStorage.setItem('level-5b-bukti-1', 'disc rekaman CCTV');
+      updateInventory();
+    } else if (popupImage.style.backgroundImage.includes('tetangga') && dialogIndex === dialogQueue.length - 1) {
+      localStorage.setItem('level-5b-item1', '1 pack rokok');
+      updateInventory();
+    } else if (popupImage.style.backgroundImage.includes('mayat') && dialogIndex === dialogQueue.length - 1) {
+      localStorage.setItem('level-5b-item2', 'ijin memeriksa meja');
+      updateInventory();
+    }
+  }
+}
+
+function showMessage(image, width, height, contentArray) {
+  overlay.style.display = 'block';
+  messageBox.style.display = 'flex';
+  popupImage.style.width = width;
+  popupImage.style.height = height;
+  popupImage.style.backgroundImage = `url('${image}')`;
+  dialogQueue = contentArray;
+  dialogIndex = 0;
+  isDialogOpen = true;
+  nextBtn.textContent = "Skip";
+  typeWriter(dialogQueue[dialogIndex]);
+}
+
+function nextDialog() {
+  playClick();
+  if (typing) {
+    clearTimeout(typingTimer);
+    dialogText.innerHTML = dialogQueue[dialogIndex];
+    typing = false;
+    stopPopupAnimation();
+    nextBtn.textContent = dialogIndex < dialogQueue.length - 1 ? "Lanjut" : "Tutup";
+  } else if (dialogIndex < dialogQueue.length - 1) {
+    dialogIndex++;
+    nextBtn.textContent = "Skip";
+    typeWriter(dialogQueue[dialogIndex]);
+  } else {
+    closeMessage();
+  }
+}
+
+function closeMessage() {
+  playClick();
+  overlay.style.display = 'none';
+  messageBox.style.display = 'none';
+  dialogText.innerHTML = '';
+  popupImage.style.backgroundImage = '';
+  dialogQueue = [];
+  dialogIndex = 0;
+  isDialogOpen = false;
+  stopPopupAnimation();
+  setIdleImage();
+}
+
+function attachClick(id, image, width, height, contentArray, itemKey = null, itemName = null) {
+  document.getElementById(id).addEventListener('click', () => {
+    playClick();
+    if (id === 'satpam' && !localStorage.getItem('level-5b-item1')) {
+      alert("apa anda punya rokok?");
+      return;
+    }
+    showMessage(image, width, height, contentArray);
+  });
+}
+
+const loadingScreen = document.getElementById('loadingScreen');
+const progressFill = document.getElementById('progressFill');
+const progressText = document.getElementById('progressText');
+let fakeProgress = 0;
+const image = document.getElementById('map-image');
+
+function setProgress(val) {
+  progressFill.style.width = val + '%';
+  progressText.textContent = `memuat... (${val}%)`;
+}
+
+function waitForImageLoad() {
+  const checkLoaded = setInterval(() => {
+    if (image.complete && image.naturalWidth > 0) {
+      setProgress(100);
+      clearInterval(checkLoaded);
+      setTimeout(() => {
+        loadingScreen.style.display = 'none';
+
+        attachClick('mayat', 'assets/images/mayat.png', '140px', '70px', [
+          "Nama korban: David Ramadhan. Usia sekitar 38 tahun. Luka tembak di dada kiri, tembakan bersih, dari jarak dekat.",
+          "Jari-jarinya terlihat melepuh, seperti baru menyentuh logam panas atau alat listrik rusak.",
+          "Di dalam saku jaketnya ditemukan selembar foto yang hangus sebagian. Wajah perempuan di foto masih terlihat jelas. Di baliknya ada tulisan tangan samar: 'Jawabannya ada di tempat kita biasa bersembunyi…'",
+          "Kamu mendapatkan izin untuk memeriksa meja David."
+        ]);
+
+        attachClick('satpam', 'assets/images/satpam-1.png', '106px', '160px', [
+          "David itu jarang berinteraksi. Bukan sombong, tapi kayak pikirannya selalu sibuk sendiri.",
+          "Saya pernah lihat dia duduk di tangga darurat sambil nulis sesuatu di kertas kecil, bolak-balik robek, buang, tulis lagi… kayak lagi ngoding atau mikirin rumus.",
+          "Malam itu, sekitar jam 2:15, saya dengar suara keras dari arah unitnya. Awalnya saya kira barang jatuh. Tapi waktu saya mau cek rekaman CCTV... bagian itu kosong. Gak error, tapi bener-bener ilang.",
+          "Yang aneh… sistem kami itu offline aja gak pernah. Gak masuk akal kalau tiba-tiba blackout cuma pas kejadian.",
+          "Ini… kartu disc rekaman CCTV cadangan. Saya simpan di loker darurat. Sekarang milikmu."
+        ]);
+
+        attachClick('tetangga', 'assets/images/tetangga-1.png', '106px', '160px', [
+          "Saya sering denger suara musik dari unit David. Tapi bukan musik biasa… lebih kayak irama pendek-pendek, kadang ngulang terus, kayak pola.",
+          "Saya inget banget… malam itu jam 1:45, terdengar melodi piano pelan. Lagu klasik, saya gak tau judulnya, tapi pernah denger dia mainkan dulu… waktu istrinya masih ada.",
+          "Saya gak tahu apa yang dia lakuin, tapi David sering ngomong sendiri. Bukan sekadar halusinasi, lebih kayak ngulang-ngulang kode, angka, atau potongan kalimat.",
+          "Ini… saya nemu bungkus rokok David terakhir. Mungkin kamu bisa pakai."
+        ]);
+
+        document.getElementById('meja').addEventListener('click', () => {
+          playClick();
+          if (!localStorage.getItem('level-5b-item2')) {
+            alert("kamu belum mendapatkan ijin dari David");
+            return;
+          }
+          const iframe = document.createElement('iframe');
+          iframe.src = 'meja.html';
+          iframe.style.width = '100vw';
+          iframe.style.height = '100vh';
+          iframe.style.border = 'none';
+          iframe.style.position = 'fixed';
+          iframe.style.top = '0';
+          iframe.style.left = '0';
+          iframe.style.zIndex = '1001';
+          iframe.style.background = '#000';
+
+          document.body.innerHTML = '';
+          document.body.appendChild(iframe);
+        });
+
+        document.getElementById('pintu').addEventListener('click', () => {
+          playClick();
+          const allBukti = ['level-5b-bukti-1', 'level-5b-bukti-2', 'level-5b-bukti-3', 'level-5b-item1', 'level-5b-item2'];
+          const hasAllBukti = allBukti.every(key => localStorage.getItem(key));
+
+          if (!hasAllBukti) {
+            showMessage('assets/images/pintu-1.png', '106px', '160px', [
+              "Pintu ini tidak terkunci, tapi ada bekas paksa di sisi dalamnya.",
+              "Mungkin korban mencoba kabur… atau seseorang masuk dengan paksa.",
+              "Kamu bisa keluar jika sudah selesai mengumpulkan semua item."
+            ]);
+          } else {
+            loadingScreen.style.display = 'flex';
+            let progress = 0;
+            const redirectInterval = setInterval(() => {
+              progress += 10;
+              setProgress(progress);
+              if (progress >= 100) {
+                clearInterval(redirectInterval);
+                window.location.href = 'level-3.html';
+              }
+            }, 150);
+          }
+        });
+
+      }, 300);
+    }
+  }, 100);
+}
+
+const fakeInterval = setInterval(() => {
+  fakeProgress += 2;
+  if (fakeProgress <= 50) {
+    setProgress(fakeProgress);
+  } else {
+    clearInterval(fakeInterval);
+    waitForImageLoad();
+  }
+}, 30);
+</script>
+</body>
+</html>

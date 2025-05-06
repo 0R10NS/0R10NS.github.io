@@ -1,0 +1,447 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>2D Platformer - Lompat Musuh</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #ffffff; overflow: hidden; user-select: none; }
+    canvas { display: block; background: transparent; touch-action: none; }
+    #score {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      font-size: 24px;
+      font-weight: bold;
+      color: #ff0;
+      z-index: 10;
+    }
+    #code {
+      position: fixed;
+      top: 1px;
+      left: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #0ff;
+      z-index: 10;
+    }
+    #restartBtn {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 20px 40px;
+      font-size: 24px;
+      background: red;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      display: none;
+      cursor: pointer;
+      z-index: 10;
+    }
+    #loadingScreen {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      font-weight: bold;
+      z-index: 20;
+    }
+    .controls {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 20px;
+      z-index: 10;
+    }
+    .btn {
+      width: 80px;
+      height: 80px;
+      background: rgba(0,0,0,0.5);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 24px;
+      user-select: none;
+    }
+    .btn:active { background: rgba(0,0,0,0.8); }
+    #backBtn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 10px 20px;
+  font-size: 18px;
+  background: #555;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  z-index: 10;
+}
+#backBtn:hover {
+  background: #333;
+}
+  </style>
+</head>
+<body><div id="loadingScreen">Loading...</div>
+<canvas id="gameCanvas"></canvas>
+<div id="score">Score: 0</div>
+<div id="code">LEVEL: BOOLL</div>
+<button id="backBtn">Kembali</button>
+<button id="restartBtn">Restart</button><div class="controls">
+  <div class="btn" id="right">⇨</div>
+  <div class="btn" id="jump">Jump</div>
+  <div class="btn" id="shoot">Shoot</div>
+</div><audio id="shootSound" src="assets/audio/step.mp3"></audio> <audio id="fleshSound" src="assets/audio/hit.mp3"></audio> <audio id="alertSound" src="assets/audio/alert.mp3"></audio>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+
+const backgroundImg = new Image();
+backgroundImg.src = 'assets/images/background-1.png';
+
+const playerImgs = [
+  'assets/images/ball-1.png',
+  'assets/images/ball-2.png',
+  'assets/images/ball-0.png'
+].map(src => {
+  const img = new Image();
+  img.src = src;
+  return img;
+});
+
+const enemyImgs = [
+  'assets/images/virus-1.png',
+  'assets/images/virus-2.png',
+  'assets/images/virus-3.png'
+].map(src => {
+  const img = new Image();
+  img.src = src;
+  return img;
+});
+
+const platformImg = new Image();
+platformImg.src = 'assets/images/lantai.png';
+
+const wallImg = new Image();
+wallImg.src = 'assets/images/honey.png';
+
+const shootSound = document.getElementById('shootSound');
+const fleshSound = document.getElementById('fleshSound');
+const alertSound = document.getElementById('alertSound');
+
+const player = {
+  x: canvas.width / 4,
+  y: canvas.height - 300,
+  width: 50,
+  height: 50,
+  vy: 0,
+  gravity: 1.5,
+  jumpPower: -20,
+  onGround: false,
+  jumping: false,
+  frame: 0,
+  frameTimer: 0
+};
+
+let worldOffset = 0;
+let worldSpeed = 7;
+let bullets = [];
+let enemies = [];
+let walls = [];
+let platforms = [{ x: 0, width: canvas.width * 2 }];
+let keys = {};
+let score = 0;
+let gameOver = false;
+let backgroundOffset = 0;
+
+function spawnEnemy(xPos) {
+  const jumpHeight = 150;
+  enemies.push({
+    x: xPos,
+    y: canvas.height - 200 - jumpHeight,
+    width: 50,
+    height: 50,
+    vy: 0,
+    gravity: 1.5,
+    jumpPower: 6 + Math.random() * 4,
+    alive: true,
+    baseX: xPos,
+    baseY: canvas.height - 200 - jumpHeight,
+    frame: 0,
+    frameTimer: 0,
+    horizontalSpeed: (Math.random() * 4) - 2
+  });
+}
+
+function spawnWall(xPos) {
+  walls.push({
+    x: xPos,
+    y: canvas.height - 260,
+    width: 50,
+    height: 60
+  });
+}
+
+function extendPlatform() {
+  const lastPlat = platforms[platforms.length - 1];
+  if ((player.x - worldOffset) > (lastPlat.x + lastPlat.width - canvas.width)) {
+    const newPlatX = lastPlat.x + lastPlat.width;
+    platforms.push({ x: newPlatX, width: canvas.width });
+
+    const enemyOffset = 400 + Math.random() * 800;
+    const wallOffset = 400 + Math.random() * 800;
+
+    spawnEnemy(newPlatX + enemyOffset);
+    spawnWall(newPlatX + wallOffset);
+  }
+}
+
+function update() {
+  if (gameOver) return;
+
+  player.vy += player.gravity;
+  player.y += player.vy;
+
+  if (player.y + player.height >= canvas.height - 200) {
+    if (player.jumping) {
+      player.width = 60;
+      player.height = 40;
+      setTimeout(() => {
+        player.width = 50;
+        player.height = 50;
+      }, 150);
+    }
+    player.y = canvas.height - 200 - player.height;
+    player.vy = 0;
+    player.onGround = true;
+    player.jumping = false;
+  } else {
+    player.onGround = false;
+  }
+
+  if (keys['ArrowRight']) {
+    worldOffset -= worldSpeed;
+    backgroundOffset -= worldSpeed / 5;
+
+    // Cegah player menembus tembok
+    walls.forEach(wall => {
+      const wallLeft = wall.x + worldOffset;
+      const wallRight = wallLeft + wall.width;
+      const playerRight = player.x + player.width;
+
+      if (
+        playerRight > wallLeft &&
+        player.x < wallRight &&
+        player.y + player.height > wall.y &&
+        player.y < wall.y + wall.height
+      ) {
+        worldOffset += worldSpeed;
+        backgroundOffset += worldSpeed / 5;
+      }
+    });
+  }
+
+  bullets.forEach(b => b.x += b.speed);
+
+  bullets.forEach(bullet => {
+    walls.forEach(wall => {
+      if (
+        bullet.x > wall.x + worldOffset &&
+        bullet.x < wall.x + worldOffset + wall.width &&
+        bullet.y > wall.y &&
+        bullet.y < wall.y + wall.height
+      ) {
+        bullet.hit = true;
+      }
+    });
+  });
+
+  bullets = bullets.filter(b => b.x < canvas.width && !b.hit);
+
+  enemies.forEach(enemy => {
+    if (enemy.alive) {
+      enemy.vy += enemy.gravity * 0.1;
+      enemy.y += enemy.vy;
+      enemy.x += enemy.horizontalSpeed * 0.5;
+
+      if (enemy.y > enemy.baseY + 80) {
+        enemy.vy = -enemy.jumpPower;
+      }
+      if (enemy.y < enemy.baseY - 50) {
+        enemy.vy = enemy.gravity;
+      }
+
+      if (enemy.x < enemy.baseX - 50) enemy.horizontalSpeed = Math.abs(enemy.horizontalSpeed);
+      if (enemy.x > enemy.baseX + 50) enemy.horizontalSpeed = -Math.abs(enemy.horizontalSpeed);
+    }
+  });
+
+  bullets.forEach(bullet => {
+    enemies.forEach(enemy => {
+      if (enemy.alive &&
+          bullet.x < enemy.x + worldOffset + enemy.width &&
+          bullet.x + 5 > enemy.x + worldOffset &&
+          bullet.y < enemy.y + enemy.height &&
+          bullet.y + 5 > enemy.y) {
+        enemy.alive = false;
+        bullet.hit = true;
+        score += 20;
+        document.getElementById('score').innerText = `Score: ${score}`;
+        fleshSound.play();
+      }
+    });
+  });
+
+  enemies.forEach(enemy => {
+    if (enemy.alive &&
+        player.x < enemy.x + worldOffset + enemy.width &&
+        player.x + player.width > enemy.x + worldOffset &&
+        player.y < enemy.y + enemy.height &&
+        player.y + player.height > enemy.y) {
+      gameOver = true;
+      document.getElementById('restartBtn').style.display = 'block';
+      alertSound.play();
+    }
+  });
+
+  player.frameTimer++;
+  if (player.frameTimer > 10) {
+    player.frame = (player.frame + 1) % playerImgs.length;
+    player.frameTimer = 0;
+  }
+
+  enemies.forEach(enemy => {
+    if (enemy.alive) {
+      enemy.frameTimer++;
+      if (enemy.frameTimer > 10) {
+        enemy.frame = (enemy.frame + 1) % enemyImgs.length;
+        enemy.frameTimer = 0;
+      }
+    }
+  });
+
+  extendPlatform();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.drawImage(backgroundImg, backgroundOffset % canvas.width, 0, canvas.width, canvas.height);
+  ctx.drawImage(backgroundImg, (backgroundOffset % canvas.width) + canvas.width, 0, canvas.width, canvas.height);
+
+  platforms.forEach(p => {
+    ctx.drawImage(platformImg, p.x + worldOffset, canvas.height - 200, p.width, 100);
+  });
+
+  walls.forEach(w => {
+    ctx.drawImage(wallImg, w.x + worldOffset, w.y, w.width, w.height);
+  });
+
+  ctx.drawImage(playerImgs[player.frame], player.x, player.y, player.width, player.height);
+
+  bullets.forEach(b => {
+    ctx.fillStyle = 'orange';
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, 5, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  enemies.forEach(e => {
+    if (e.alive) {
+      ctx.drawImage(enemyImgs[e.frame], e.x + worldOffset, e.y, e.width, e.height);
+    }
+  });
+}
+
+function gameLoop() {
+  update();
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+
+function startGame() {
+  document.getElementById('loadingScreen').style.display = 'none';
+  gameLoop();
+}
+
+window.onload = startGame;
+
+document.addEventListener('keydown', (e) => {
+  if (gameOver) return;
+  keys[e.code] = true;
+  if (e.code === 'Space' && player.onGround) {
+    player.vy = player.jumpPower;
+    player.jumping = true;
+    player.width = 40;
+    player.height = 60;
+  }
+  if (e.code === 'KeyZ') {
+    bullets.push({
+      x: player.x + player.width,
+      y: player.y + player.height / 2,
+      speed: 10
+    });
+    shootSound.play();
+  }
+});
+
+document.addEventListener('keyup', (e) => {
+  if (gameOver) return;
+  keys[e.code] = false;
+});
+
+document.getElementById('jump').addEventListener('touchstart', () => {
+  if (gameOver) return;
+  if (player.onGround) {
+    player.vy = player.jumpPower;
+    player.jumping = true;
+    player.width = 40;
+    player.height = 60;
+  }
+});
+
+document.getElementById('right').addEventListener('touchstart', () => {
+  if (gameOver) return;
+  keys['ArrowRight'] = true;
+});
+
+document.getElementById('right').addEventListener('touchend', () => {
+  if (gameOver) return;
+  keys['ArrowRight'] = false;
+});
+
+document.getElementById('shoot').addEventListener('touchstart', () => {
+  if (gameOver) return;
+  bullets.push({
+    x: player.x + player.width,
+    y: player.y + player.height / 2,
+    speed: 10
+  });
+  shootSound.play();
+});
+
+document.getElementById('backBtn').addEventListener('click', () => {
+  window.location.href = 'level-3.html';
+});
+
+document.getElementById('restartBtn').addEventListener('click', () => {
+  window.location.reload();
+});
+</script></body>
+</html>

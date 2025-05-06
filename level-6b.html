@@ -1,0 +1,272 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Level 6b Memory Match</title>
+  <style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; position: relative; }
+  body { font-family: sans-serif; }
+
+  #background {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    animation: bgCycle 0.3s infinite;
+    background-size: cover;
+  }
+  @keyframes bgCycle {
+    0% { background-image: url('assets/images/bg1.png'); }
+    33% { background-image: url('assets/images/bg2.png'); }
+    66% { background-image: url('assets/images/bg3.png'); }
+    100% { background-image: url('assets/images/bg1.png'); }
+  }
+
+  @keyframes shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); }
+    75% { transform: translateX(-5px); }
+    100% { transform: translateX(0); }
+  }
+
+  #map {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    height: 400px;
+    display: grid;
+    grid-template-columns: repeat(5, 60px);
+    grid-template-rows: repeat(5, 80px);
+    gap: 0;
+    z-index: 1;
+  }
+
+  .tile {
+    width: 60px;
+    height: 80px;
+    background-image: url('assets/images/grid-tile.png');
+    background-size: cover;
+    position: relative;
+  }
+
+  .drawer {
+    position: absolute;
+    width: 10px;
+    height: 80px;
+    background-image: url('assets/images/file-slot.png');
+    background-size: cover;
+    z-index: 9;
+    transition: width 0.5s;
+  }
+
+  .drawer.shrunk {
+    width: 60px;
+  }
+
+  .file {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    top: 20px;
+    cursor: pointer;
+    background-size: cover;
+    transition: all 0.3s ease;
+  }
+
+  .file.selected {
+    outline: 2px solid yellow;
+  }
+
+  .file.matching {
+    animation: blinkBorder 0.3s infinite alternate, glitch 0.3s infinite alternate;
+  }
+
+  @keyframes blinkBorder {
+    from { border: 2px solid blue; }
+    to { border: 2px solid red; }
+  }
+
+  @keyframes glitch {
+    0% { transform: skew(0); }
+    20% { transform: skew(1deg, -1deg); }
+    40% { transform: skew(-1deg, 1deg); }
+    60% { transform: skew(2deg, 0); }
+    80% { transform: skew(0, -2deg); }
+    100% { transform: skew(0); }
+  }
+
+  #narrative-popup {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 15px;
+    border-radius: 8px;
+    width: 300px;
+    height: 400px;
+    max-width: 90%;
+    font-size: 14px;
+    display: none;
+    z-index: 99;
+  }
+
+  #narrative-popup button {
+    margin-top: 10px;
+    background: #0ff;
+    color: black;
+    padding: 5px 10px;
+    border: none;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+  <div id="background"></div>
+  <div id="map"></div>
+  <div id="narrative-popup"></div>
+  <audio id="sfx-type" src="assets/audio/type.mp3"></audio>
+  <audio id="sfx-pintu" src="assets/audio/pintu.mp3"></audio>
+  <audio id="sfx-alert" src="assets/audio/alert.mp3"></audio>
+  <audio id="sfx-get" src="assets/audio/get.mp3"></audio>
+  <script>
+const map = document.getElementById('map');
+const popup = document.getElementById('narrative-popup');
+const audio = {
+  type: document.getElementById('sfx-type'),
+  pintu: document.getElementById('sfx-pintu'),
+  alert: document.getElementById('sfx-alert'),
+  get: document.getElementById('sfx-get')
+};
+
+const fileTypes = ['A','A','B','B','C','C','D','D','E','E','F','F','X','Y','Z'];
+
+// Fisher-Yates shuffle
+for (let i = fileTypes.length - 1; i > 0; i--) {
+  const j = Math.floor(Math.random() * (i + 1));
+  [fileTypes[i], fileTypes[j]] = [fileTypes[j], fileTypes[i]];
+}
+
+let openDrawers = [], matchedPairs = 0, matchedKeys = [], isProcessing = false;
+
+for (let i = 0; i < 25; i++) {
+  const tile = document.createElement('div');
+  tile.classList.add('tile');
+
+  const drawer = document.createElement('div');
+  drawer.classList.add('drawer', 'shrunk');
+  drawer.addEventListener('click', () => toggleDrawer(drawer));
+  tile.appendChild(drawer);
+
+  if (i < fileTypes.length) {
+    const type = fileTypes[i];
+    const file = createFile(type);
+    tile.appendChild(file);
+  }
+
+  map.appendChild(tile);
+}
+
+function toggleDrawer(drawer) {
+  audio.pintu.currentTime = 0;
+  audio.pintu.play();
+
+  if (!drawer.classList.contains('shrunk')) {
+    drawer.classList.add('shrunk');
+    openDrawers = openDrawers.filter(d => d !== drawer);
+    return;
+  }
+
+  if (openDrawers.length >= 2) {
+    openDrawers.forEach(d => d.classList.add('shrunk'));
+    openDrawers = [];
+  }
+
+  drawer.classList.remove('shrunk');
+  openDrawers.push(drawer);
+}
+
+function showNarrative(text, end = false) {
+  popup.innerHTML = `<div>${text}</div>` + (!end ? '<button onclick="popup.style.display=\'none\';checkEnd();">Lanjut</button>' : '<button onclick="location.href=\'level-7b.html\'">Simpan</button>');
+  popup.style.display = 'block';
+}
+
+function checkEnd() {
+  if (matchedPairs === 6) {
+    setTimeout(() => {
+      showNarrative("Project Orion bukan penyembuhan. Itu penghapusan. Mereka bilang ini demi umat manusia, tapi sebenarnya ini eksperimen kendali pikiran berskala global. Pemimpinnya? Alven Ried. Dia bukan ilmuwan... dia manipulator. Dan aku... aku korban yang sempat jadi senjatanya. Tapi sekarang, David, kamu punya semua kepingannya. Kebenaran... dan keputusan.", true);
+    }, 600);
+  }
+}
+
+function createFile(type) {
+  const file = document.createElement('div');
+  file.classList.add('file', type);
+  file.style.backgroundImage = `url('assets/images/file-${type}.png')`;
+
+  file.addEventListener('click', () => {
+    if (isProcessing || file.classList.contains('matching')) return;
+
+    audio.type.currentTime = 0;
+    audio.type.play();
+
+    file.classList.toggle('selected');
+    const selected = document.querySelectorAll('.file.selected');
+
+    if (selected.length === 2) {
+      isProcessing = true;
+      const [a, b] = selected;
+      if (a.classList[1] === b.classList[1] && a !== b) {
+        a.classList.add('matching');
+        b.classList.add('matching');
+        setTimeout(() => {
+          a.style.width = '0px';
+          b.style.width = '0px';
+          audio.get.currentTime = 0;
+          audio.get.play();
+        }, 600);
+
+        setTimeout(() => {
+          a.remove();
+          b.remove();
+          matchedPairs++;
+          matchedKeys.push(a.classList[1]);
+          const messages = {
+            A: "David... kamu masih hidup, kan? Aku nggak tahu berapa lama ini terkubur. Kalau kamu baca ini, artinya kamu cukup nekat buat nyari aku. Jangan berhenti, tolong.",
+            B: "Hari ke-9. Aku mulai lupa nama bunga favoritku... tapi aku ingat caramu melafalkan namaku waktu kita pertama kali bertemu. Mereka belum bisa ambil semua dariku.",
+            C: "Aku lihat wajahku di cermin hari ini. Tapi bukan aku yang menatap balik. Mereka bilang aku harus 'beradaptasi'... tapi kamu tahu aku keras kepala soal jadi diriku sendiri.",
+            D: "Aku pernah mimpi, kamu datang selimuti aku pakai hoodie hitammu. Tapi aku bangun di ruangan putih—datar, dingin, dan penuh suara mesin. Aku kangen kamu, tapi lebih dari itu... aku takut aku bakal lupa kamu.",
+            E: "Mereka rekam tangisanku. Katanya bagian dari 'pemetaan emosi'. David, jika kamu denger rekamanku suatu hari nanti, ingat... setiap isaknya bukan kelemahan. Itu perlawanan.",
+            F: "Aku sembunyikan potongan data di tiap ruang yang sempat aku jangkau. Mereka akan bilang aku delusi. Tapi kamu, David, kamu harus percaya sama aku. Kamu satu-satunya yang bisa merakit ulang semuanya."
+          };
+          showNarrative(messages[a.classList[1]] || "...");
+          isProcessing = false;
+        }, 1200);
+      } else {
+        setTimeout(() => {
+          audio.alert.currentTime = 0;
+          audio.alert.play();
+          a.classList.remove('selected');
+          b.classList.remove('selected');
+
+          a.style.animation = b.style.animation = 'shake 0.3s';
+          setTimeout(() => {
+            a.style.animation = b.style.animation = '';
+          }, 300);
+
+          isProcessing = false;
+        }, 300);
+      }
+    }
+  });
+
+  return file;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html><html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Level 4B2 - Trash Breaker</title>
+<style>
+body {background:#000;color:#0f0;font-family:'Courier New',monospace;text-align:center;margin:0;padding:10px;overflow:hidden}
+canvas {display:block;margin:10px auto;background:#fff;border:2px solid #0f0}
+#popupMessage,#startPopup {position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#000;color:#0f0;border:2px solid #0f0;padding:20px;z-index:10;display:none}
+#startPopup {flex-direction:column;justify-content:center;align-items:center;width:100%;height:100%;z-index:20;font-family:'Courier New',monospace;text-align:center;display:flex}
+.controls {display:flex;justify-content:center;margin-top:10px;gap:10px}
+.controls button,h1 {font-family:'Courier New',monospace;background:#000;color:#0f0;border:1px solid #0f0;padding:8px 16px;cursor:pointer}
+h1 {text-shadow:0 0 5px #0f0,0 0 10px #0ff;margin:0;font-size:16px}
+h1 img {width:32px;height:32px;vertical-align:middle}
+#healthBar {position:absolute;top:70px;right:10px;width:100px;height:10px;background:#400040;border:2px solid #0f0}
+#healthFill {height:100%;width:100%;background:linear-gradient(to right,#0f0,#0f0);transition:width .3s ease}
+#loadingContainer {width:300px;height:20px;border:2px solid #0f0;background:#111;margin:10px auto;position:relative}
+#loadingBar {height:100%;width:0%;background:linear-gradient(to right,#00f,#0f0);transition:width .2s ease}
+#loadingText {font-family:'Courier New',monospace;margin-top:5px;color:#0f0}
+body::after {content:"";position:absolute;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(to bottom,rgba(0,0,0,0) 0,rgba(0,0,0,0) 2px,rgba(0,0,0,0.1) 4px);pointer-events:none;z-index:5}
+</style>
+</head>
+<body>
+<h1><img src="assets/images/tong.png" alt="Bin Icon">Recycle Bin</h1>
+<div id="healthBar"><div id="healthFill"></div></div>
+<canvas id="gameCanvas" width="300" height="450"></canvas>
+<div id="loadingContainer"><div id="loadingBar"></div></div>
+<div id="loadingText">Loading... 0%</div>
+<div class="controls">
+<button onclick="moveLeft()">◀ Kiri</button>
+<button onclick="togglePause()">Pause</button>
+<button onclick="moveRight()">Kanan ▶</button>
+</div>
+<div id="popupMessage"><p>Recycle Bin telah bersih!</p><button onclick="location.href='level-4b1.html'">Kembali</button></div>
+<div id="startPopup"><p style="padding:20px">Sistem sedang error dan berpotensi menghapus file penting.<br> Tetap jalankan penghapusan file?</p><div style="margin-top:20px;"><button onclick="startGame()" style="margin-right:10px">Iya</button><button onclick="location.href='level-4b1.html'">Batal</button></div></div>
+<script>
+const canvas=document.getElementById("gameCanvas"),ctx=canvas.getContext("2d");
+function playSound(src){const audio=new Audio(src);audio.play()}
+const SFX={step:"assets/audio/step.mp3",flesh:"assets/audio/flesh.mp3",get:"assets/audio/get.mp3"};
+const ballSprites=["assets/images/ball-0.png","assets/images/ball-1.png","assets/images/ball-2.png"].map(src=>{const img=new Image();img.src=src;return img}),
+crackSprites=["assets/images/crack_file-0.png","assets/images/crack_file-1.png","assets/images/crack_file-2.png","assets/images/crack_file-3.png"].map(src=>{const img=new Image();img.src=src;return img}),
+brokenSprites=["assets/images/broken_file-0.png","assets/images/broken_file-1.png","assets/images/broken_file-2.png","assets/images/broken_file-3.png"].map(src=>{const img=new Image();img.src=src;return img});
+const paddleTexture=new Image();paddleTexture.src="assets/images/lantai.png";
+let currentBallFrame=0,ballFrameTimer=0,ballFrameRate=1000/6,ballX=canvas.width/2,ballY=canvas.height-30,ballRadius=10,dx=2,dy=-2,paddleHeight=15,paddleWidth=90,paddleX=(canvas.width-paddleWidth)/2,rightPressed=false,leftPressed=false,paused=false,gameRunning=true,health=5;
+const brickRowCount=4,brickColumnCount=8,brickSize=30,brickPadding=5,brickOffsetTop=20,brickOffsetLeft=10;
+let bricks=[];for(let c=0;c<brickColumnCount;c++){bricks[c]=[];for(let r=0;r<brickRowCount;r++){bricks[c][r]={x:0,y:0,status:4,animFrame:0,animTimer:0}}}
+function updateHealthBar(){document.getElementById("healthFill").style.width=(health/5*100)+"%"}
+function saveProgress(){const progress={health,ballX,ballY,dx,dy,paddleX,bricks};localStorage.setItem("trashBreakerSave",JSON.stringify(progress))}
+function loadProgress(){if(localStorage.getItem("trashBreakerComplete")){window.location.href='level-4b1.html';return}const saved=localStorage.getItem("trashBreakerSave");if(saved){const data=JSON.parse(saved);health=data.health;ballX=data.ballX;ballY=data.ballY;dx=data.dx;dy=data.dy;paddleX=data.paddleX;bricks=data.bricks}}
+document.addEventListener("keydown",e=>{if(e.key==="Right"||e.key==="ArrowRight")rightPressed=true;else if(e.key==="Left"||e.key==="ArrowLeft")leftPressed=true});
+document.addEventListener("keyup",e=>{if(e.key==="Right"||e.key==="ArrowRight")rightPressed=false;else if(e.key==="Left"||e.key==="ArrowLeft")leftPressed=false});
+function moveLeft(){paddleX=Math.max(0,paddleX-20)}
+function moveRight(){paddleX=Math.min(canvas.width-paddleWidth,paddleX+20)}
+function togglePause(){paused=!paused}
+function glitchEffect(next){let count=0;const overlay=document.createElement("div");overlay.style.position="absolute";overlay.style.top=0;overlay.style.left=0;overlay.style.width="100%";overlay.style.height="100%";overlay.style.backgroundColor="#fff";overlay.style.mixBlendMode="difference";overlay.style.pointerEvents="none";document.body.appendChild(overlay);const intv=setInterval(()=>{overlay.style.opacity=Math.random();count++;if(count>6){clearInterval(intv);document.body.removeChild(overlay);next()}},80)}
+function showPopup(){playSound(SFX.get);document.getElementById("popupMessage").style.display="block"}
+function collisionDetection(){let remaining=0;for(let c=0;c<brickColumnCount;c++){for(let r=0;r<brickRowCount;r++){const b=bricks[c][r];if(b.status>0){remaining++;if(ballX>b.x&&ballX<b.x+brickSize&&ballY>b.y&&ballY<b.y+brickSize){dy=-dy;b.status--;playSound(SFX.step);saveProgress();if(b.status===0)playSound(SFX.flesh)}}}}if(remaining===0){gameRunning=false;localStorage.removeItem("trashBreakerSave");localStorage.setItem("trashBreakerComplete","true");showPopup();}}
+function drawBall(delta){ballFrameTimer+=delta;if(ballFrameTimer>=ballFrameRate){currentBallFrame=(currentBallFrame+1)%ballSprites.length;ballFrameTimer=0}ctx.drawImage(ballSprites[currentBallFrame],ballX-ballRadius,ballY-ballRadius,20,20)}
+function drawPaddle(){ctx.drawImage(paddleTexture,paddleX,canvas.height-paddleHeight,paddleWidth,paddleHeight)}
+function drawBricks(delta){for(let c=0;c<brickColumnCount;c++){for(let r=0;r<brickRowCount;r++){const b=bricks[c][r],brickX=c*(brickSize+brickPadding)+brickOffsetLeft,brickY=r*(brickSize+brickPadding)+brickOffsetTop;b.x=brickX;b.y=brickY;if(b.status>0){ctx.drawImage(crackSprites[4-b.status],brickX,brickY,brickSize,brickSize)}else{b.animTimer+=delta;if(b.animTimer<800){b.animFrame=Math.floor((b.animTimer/800)*4)%4;ctx.drawImage(brokenSprites[b.animFrame],brickX,brickY,brickSize,brickSize)}}}}}
+let lastTime=0;
+function draw(timestamp=0){const delta=timestamp-lastTime;lastTime=timestamp;if(!gameRunning)return;if(paused){requestAnimationFrame(draw);return}ctx.clearRect(0,0,canvas.width,canvas.height);drawBricks(delta);drawBall(delta);drawPaddle();collisionDetection();if(ballX+dx>canvas.width-ballRadius||ballX+dx<ballRadius){dx=-dx;playSound(SFX.step)}if(ballY+dy<ballRadius){dy=-dy;playSound(SFX.step)}if(ballY+dy>canvas.height-paddleHeight-ballRadius){if(ballX>paddleX&&ballX<paddleX+paddleWidth){dy=-dy;playSound(SFX.step)}else if(ballY+ballRadius>canvas.height){health--;updateHealthBar();saveProgress();if(health<=0){glitchEffect(()=>{localStorage.removeItem("trashBreakerSave");document.location.reload()});return}else{ballX=canvas.width/2;ballY=canvas.height-30;dx=2;dy=-2;paddleX=(canvas.width-paddleWidth)/2}}}ballX+=dx;ballY+=dy;saveProgress();if(rightPressed&&paddleX<canvas.width-paddleWidth)paddleX+=5;else if(leftPressed&&paddleX>0)paddleX-=5;requestAnimationFrame(draw)}
+const loadingBar=document.getElementById("loadingBar"),loadingText=document.getElementById("loadingText"),loadingContainer=document.getElementById("loadingContainer"),allImages=[...ballSprites,...crackSprites,...brokenSprites,paddleTexture];let loaded=0;
+function updateLoading(){const percent=Math.floor((loaded/allImages.length)*100);loadingBar.style.width=`${percent}%`;loadingText.innerText=`Loading... ${percent}%`}
+function startGame(){document.getElementById("startPopup").style.display="none";loadProgress();updateHealthBar();requestAnimationFrame(draw)}
+allImages.forEach(img=>{img.onload=()=>{loaded++;updateLoading();if(loaded===allImages.length){loadingContainer.style.display="none";loadingText.style.display="none";document.getElementById("startPopup").style.display="flex"}}});
+</script>
+</body>
+</html>

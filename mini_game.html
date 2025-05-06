@@ -1,0 +1,349 @@
+<!DOCTYPE html><html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Mini Game - Serangan Sistem</title>
+  <style>
+    body {
+      background: url('assets/images/background.png') no-repeat center center fixed;
+      background-size: cover;
+      color: #0f0;
+      font-family: monospace;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    canvas {
+      background: #fff;
+      display: block;
+      margin: 60px auto 10px auto;
+      border: 1px solid #0f0;
+    }
+    #scoreDisplay, #highScoreDisplay, #livesDisplay {
+      position: absolute;
+      padding: 5px 10px;
+      font-size: 9px;
+      font-weight: bold;
+      background: url('assets/images/lantai.png');
+      background-size: cover;
+      border: 1px solid #0f0;
+      color: White;
+    }
+    #scoreDisplay {
+      top: 10px;
+      left: 10px;
+    }
+    #highScoreDisplay {
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    #livesDisplay {
+      top: 10px;
+      right: 10px;
+    }
+    #controls {
+      margin-top: 20px;
+    }
+    #controls button {
+      width: 50px;
+      height: 40px;
+      margin: 2px;
+      font-size: 16px;
+      background: #000;
+      color: #0f0;
+      border: 1px solid #0f0;
+      cursor: pointer;
+    }
+    #controls > div {
+      display: flex;
+      justify-content: center;
+      gap: 35px;
+      margin-top: 5px;
+    }
+    .popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: url('assets/images/lantai.png');
+      background-size: cover;
+      background-color: rgba(0, 0, 0, 0.6);
+      background-blend-mode: multiply;
+      color: #0f0;
+      border: 2px solid #0f0;
+      padding: 20px;
+      z-index: 999;
+      width: 300px;
+      text-align: center;
+    }
+    .popup button {
+      margin: 10px 5px 0;
+      background: #000;
+      color: #0f0;
+      border: 1px solid #0f0;
+      padding: 8px 20px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="startPopup" class="popup">
+    <p>Mulai Mini Game?</p>
+    <button onclick="startGame()">Mulai</button>
+    <button onclick="window.location.href='level-4b1.html'">Kembali</button>
+  </div>  <div id="pausePopup" class="popup">
+    <p>Game Dijeda</p>
+    <button onclick="resumeGame()">Lanjut Main</button>
+    <button onclick="window.location.href='level-4b1.html'">Keluar</button>
+  </div>  <div id="gameOverPopup" class="popup">
+    <p style="font-size: 24px;">GAME OVER</p>
+    <button onclick="restartGame()">Main Lagi</button>
+    <button onclick="window.location.href='level-4b1.html'">Keluar</button>
+  </div>  <div id="scoreDisplay">Score: 0</div>
+  <div id="highScoreDisplay">High Score: 0</div>
+  <div id="livesDisplay">O O O</div>
+  <canvas id="gameCanvas" width="200" height="360"></canvas>
+  <div id="controls">
+    <div>
+      <button disabled style="visibility: hidden;">-</button>
+      <button onclick="pauseGame()">II</button>
+      <button disabled style="visibility: hidden;">-</button>
+    </div>
+    <div>
+      <button onclick="moveLeft()">&lt;</button>
+      <button onclick="shoot()">A</button>
+      <button onclick="moveRight()">&gt;</button>
+    </div>
+  </div><audio id="buttonSound" src="assets/audio/button.mp3" preload="auto"></audio> <audio id="alertSound" src="assets/audio/alert.mp3" preload="auto"></audio> <audio id="typeSound" src="assets/audio/type.mp3" preload="auto"></audio> <audio id="getSound" src="assets/audio/get.mp3" preload="auto"></audio>
+
+  <script>
+    const ctx = document.getElementById("gameCanvas").getContext("2d");
+    const scoreDisplay = document.getElementById("scoreDisplay");
+    const highScoreDisplay = document.getElementById("highScoreDisplay");
+    const livesDisplay = document.getElementById("livesDisplay");
+    const getSound = document.getElementById("getSound");
+
+    const cols = 5;
+    const rows = 9;
+    const gridSize = 40;
+
+    let playerCol = 2;
+    let playerShooting = false;
+    let bullets = [];
+    let viruses = [];
+    let score = 0;
+    let highScore = localStorage.getItem("highScore") || 0;
+    let speed = 1;
+    let gameActive = true;
+    let gamePaused = false;
+    let virusFrame = 0;
+    let frameCount = 0;
+    let lives = 3;
+    let maxVirusOnScreen = 5;
+
+    const stoneImg = new Image();
+    stoneImg.src = "assets/images/batu.png";
+
+    const virusSprites = ["walking-1.png", "walking-2.png", "walking-3.png"].map(name => {
+      let img = new Image();
+      img.src = `assets/images/${name}`;
+      return img;
+    });
+
+    const virusDeadSprites = ["dead-1.png", "dead-2.png", "dead-3.png"].map(name => {
+      let img = new Image();
+      img.src = `assets/images/${name}`;
+      return img;
+    });
+
+    const playerSprite = new Image();
+    const playerShootSprite = new Image();
+    playerSprite.src = "assets/images/frog-1.png";
+    playerShootSprite.src = "assets/images/frog-2.png";
+
+    const hitSound = new Audio("assets/audio/flesh.mp3");
+
+    function playSound(id) {
+      const sfx = document.getElementById(id);
+      sfx.currentTime = 0;
+      sfx.play();
+    }
+
+    function playHit() {
+      hitSound.currentTime = 0;
+      hitSound.play();
+    }
+
+    function updateLives() {
+      livesDisplay.textContent = "O ".repeat(lives).trim();
+    }
+
+    function updateHighScore() {
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem("highScore", highScore);
+      }
+      highScoreDisplay.textContent = `High Score: ${highScore}`;
+    }
+
+    function moveLeft() {
+      if (!gameActive || gamePaused) return;
+      playSound('buttonSound');
+      if (playerCol > 0) playerCol--;
+    }
+
+    function moveRight() {
+      if (!gameActive || gamePaused) return;
+      playSound('buttonSound');
+      if (playerCol < cols - 1) playerCol++;
+    }
+
+    function shoot() {
+      if (!gameActive || gamePaused) return;
+      playSound('buttonSound');
+      bullets.push({ x: playerCol, y: rows - 1 });
+      playerShooting = true;
+      setTimeout(() => playerShooting = false, 100);
+    }
+
+    function pauseGame() {
+      if (!gameActive) return;
+      gamePaused = true;
+      document.getElementById("pausePopup").style.display = "block";
+    }
+
+    function resumeGame() {
+      gamePaused = false;
+      document.getElementById("pausePopup").style.display = "none";
+      requestAnimationFrame(update);
+    }
+
+    function restartGame() {
+      playerCol = 2;
+      bullets = [];
+      viruses = [];
+      score = 0;
+      speed = 1;
+      gameActive = true;
+      gamePaused = false;
+      virusFrame = 0;
+      frameCount = 0;
+      lives = 3;
+      updateLives();
+      updateHighScore();
+      scoreDisplay.textContent = "Score: 0";
+      document.getElementById("controls").style.display = "block";
+      scoreDisplay.style.display = "block";
+      document.getElementById("gameOverPopup").style.display = "none";
+      spawnVirus();
+      requestAnimationFrame(update);
+    }
+
+    function drawGrid() {
+      ctx.clearRect(0, 0, 200, 360);
+      for (let i = 0; i < cols; i++) {
+        for (let j = 0; j < rows; j++) {
+          ctx.drawImage(stoneImg, i * gridSize, j * gridSize, gridSize, gridSize);
+          ctx.strokeStyle = "#0f0";
+          ctx.strokeRect(i * gridSize, j * gridSize, gridSize, gridSize);
+        }
+      }
+    }
+
+    function drawPlayer() {
+      const img = playerShooting ? playerShootSprite : playerSprite;
+      ctx.drawImage(img, playerCol * gridSize + 2, (rows - 1) * gridSize + 2, 36, 36);
+    }
+
+    function drawBullets() {
+      ctx.fillStyle = "#0f0";
+      bullets.forEach(b => ctx.fillRect(b.x * gridSize + 18, b.y * gridSize + 10, 4, 10));
+    }
+
+    function drawViruses() {
+      viruses.forEach(v => {
+        const isDead = v.dead;
+        const spriteList = isDead ? virusDeadSprites : virusSprites;
+        const spriteSpeed = isDead ? 20 : 10;
+        const sprite = spriteList[Math.floor(frameCount / spriteSpeed) % spriteList.length];
+        ctx.drawImage(sprite, v.x * gridSize + 5, v.y, 30, 30);
+      });
+    }
+
+    function update() {
+      if (!gameActive || gamePaused) return;
+      frameCount++;
+      drawGrid();
+      drawPlayer();
+      drawBullets();
+
+      bullets.forEach(b => b.y -= 1);
+      bullets = bullets.filter(b => b.y >= 0);
+
+      viruses.forEach(v => {
+        if (!v.dead) v.y += speed;
+        else v.y -= 2;
+      });
+
+      drawViruses();
+
+      bullets.forEach((b, bi) => {
+        viruses.forEach((v, vi) => {
+          if (!v.dead && b.x === v.x && v.y + 30 > b.y * gridSize) {
+            bullets.splice(bi, 1);
+            v.dead = true;
+            setTimeout(() => viruses.splice(vi, 1), 500);
+            playHit();
+            score += 5;
+            scoreDisplay.textContent = `Score: ${score}`;
+            updateHighScore();
+            if ([200, 400, 600, 800, 1000].includes(score)) {
+              speed += 0.5;
+              getSound.play();
+            }
+          }
+        });
+      });
+
+      for (let i = viruses.length - 1; i >= 0; i--) {
+        if (!viruses[i].dead && viruses[i].y + 30 >= gridSize * rows) {
+          viruses.splice(i, 1);
+          lives--;
+          updateLives();
+          if (lives <= 0) {
+            gameActive = false;
+            alertSound.play();
+            document.getElementById("controls").style.display = "none";
+            scoreDisplay.style.display = "none";
+            document.getElementById("gameOverPopup").style.display = "block";
+            return;
+          }
+        }
+      }
+
+      requestAnimationFrame(update);
+    }
+
+    function spawnVirus() {
+      if (!gameActive) return;
+      if (viruses.filter(v => !v.dead).length < maxVirusOnScreen) {
+        let col = Math.floor(Math.random() * cols);
+        viruses.push({ x: col, y: -30, dead: false });
+      }
+      setTimeout(spawnVirus, 1200);
+    }
+
+    function startGame() {
+      document.getElementById("startPopup").style.display = "none";
+      updateHighScore();
+      updateLives();
+      spawnVirus();
+      requestAnimationFrame(update);
+    }
+
+    window.onload = () => {
+      document.getElementById("startPopup").style.display = "block";
+    };
+  </script></body>
+</html>

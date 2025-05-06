@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Level 5a2 - Serangan Sistem</title>
+<style>
+body { background: #000; color: #0f0; font-family: monospace; margin: 0; padding: 0; text-align: center; }
+canvas { background: #fff; display: block; margin: 20px auto 10px; border: 1px solid #0f0; }
+#scoreDisplay { position: absolute; top: 10px; left: 10px; color: red; font-size: 12px; font-weight: bold; }
+#controls { margin-top: 20px; }
+#controls button { width: 60px; height: 40px; margin: 2px; font-size: 16px; background: #000; color: #0f0; border: 1px solid #0f0; cursor: pointer; }
+.popup { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; color: #0f0; border: 2px solid #0f0; padding: 20px; z-index: 999; width: 300px; text-align: left; }
+.popup img { width: 100px; float: left; margin-right: 10px; }
+.popup button { margin-top: 10px; float: right; background: transparent; color: #0f0; border: none; cursor: pointer; }
+#fileButton { display: flex; align-items: center; gap: 10px; margin-top: 20px; background: #111; border: 1px solid #0f0; padding: 8px; cursor: pointer; }
+#fileButton img { width: 20px; height: 20px; }
+#levelCode { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); color: #0f0; font-size: 14px; opacity: 0.5; }
+</style>
+</head>
+<body>
+<div id="scoreDisplay">Score: 0 | High Score: 0</div>
+<canvas id="gameCanvas" width="200" height="360"></canvas>
+<div id="controls">
+  <button onclick="moveLeft()">&lt;=</button>
+  <button onclick="shoot()">Shoot</button>
+  <button onclick="moveRight()">=&gt;</button>
+</div>
+<div id="finalPopup" class="popup">
+  <img src="assets/images/selena-4.png" alt="Selena">
+  <div id="finalText"></div>
+  <div id="fileButton" onclick="goToNextLevel()">
+    <img src="assets/images/file.png" alt="file icon">
+    <span>Server_Orion.exe</span>
+  </div>
+</div>
+<div id="levelCode">Kode Level: FSS5A2</div>
+
+<audio id="buttonSound" src="assets/audio/button.mp3" preload="auto"></audio>
+<audio id="alertSound" src="assets/audio/alert.mp3" preload="auto"></audio>
+<audio id="typeSound" src="assets/audio/type.mp3" preload="auto"></audio>
+<audio id="hitSound" src="assets/audio/hit.mp3" preload="auto"></audio>
+<audio id="noiseLoop" src="assets/audio/noisy.mp3" preload="auto" loop></audio>
+
+<script>
+const ctx = document.getElementById("gameCanvas").getContext("2d");
+const scoreDisplay = document.getElementById("scoreDisplay");
+const finalPopup = document.getElementById("finalPopup");
+const finalText = document.getElementById("finalText");
+const noiseLoop = document.getElementById("noiseLoop");
+const cols = 5, rows = 9, gridSize = 40;
+let playerCol = 2, playerShooting = false, bullets = [], viruses = [];
+let score = 0, speed = 1, gameActive = true, typeInterval, virusFrame = 0;
+
+let highScore = localStorage.getItem("level-5a-highscore") || 0;
+scoreDisplay.textContent = `Score: 0 | High Score: ${highScore}`;
+
+const virusSprites = ["virus-1.png", "virus-2.png", "virus-3.png"].map(name => {
+  let img = new Image();
+  img.src = `assets/images/${name}`;
+  return img;
+});
+
+const virusDeadSprites = ["virus_dead-1.png", "virus_dead-2.png", "virus_dead-3.png"].map(name => {
+  let img = new Image();
+  img.src = `assets/images/${name}`;
+  return img;
+});
+
+const playerSprite = new Image();
+const playerShootSprite = new Image();
+playerSprite.src = "assets/images/player-1.png";
+playerShootSprite.src = "assets/images/player-2.png";
+
+function playSound(id) {
+  const sfx = document.getElementById(id);
+  sfx.currentTime = 0;
+  sfx.play();
+}
+
+function moveLeft() {
+  playSound('buttonSound');
+  if (playerCol > 0) playerCol--;
+}
+
+function moveRight() {
+  playSound('buttonSound');
+  if (playerCol < cols - 1) playerCol++;
+}
+
+function shoot() {
+  playSound('buttonSound');
+  bullets.push({ x: playerCol, y: rows - 1 });
+  playerShooting = true;
+  setTimeout(() => playerShooting = false, 100);
+}
+
+function drawGrid() {
+  ctx.clearRect(0, 0, 200, 360);
+  ctx.strokeStyle = "#ccc";
+  for (let i = 0; i < cols; i++) {
+    for (let j = 0; j < rows; j++) {
+      ctx.strokeRect(i * gridSize, j * gridSize, gridSize, gridSize);
+    }
+  }
+}
+
+function drawPlayer() {
+  const img = playerShooting ? playerShootSprite : playerSprite;
+  ctx.drawImage(img, playerCol * gridSize + 2, (rows - 1) * gridSize + 2, 36, 36);
+}
+
+function drawBullets() {
+  ctx.fillStyle = "#0f0";
+  bullets.forEach(b => ctx.fillRect(b.x * gridSize + 18, b.y * gridSize + 10, 4, 10));
+}
+
+function drawViruses() {
+  viruses.forEach(v => {
+    const spriteList = v.dead ? virusDeadSprites : virusSprites;
+    const sprite = spriteList[virusFrame % spriteList.length];
+    ctx.drawImage(sprite, v.x * gridSize + 5, v.y, 35, 35);
+  });
+}
+
+function update() {
+  if (!gameActive) return;
+  virusFrame++;
+  drawGrid();
+  drawPlayer();
+  drawBullets();
+
+  bullets.forEach(b => b.y -= 1);
+  bullets = bullets.filter(b => b.y >= 0);
+
+  viruses.forEach(v => {
+    if (!v.dead) v.y += speed * 0.5;
+    else v.y -= 0.8;
+  });
+
+  drawViruses();
+
+  bullets.forEach((b, bi) => {
+    viruses.forEach((v, vi) => {
+      if (!v.dead && b.x === v.x && v.y + 30 > b.y * gridSize) {
+        bullets.splice(bi, 1);
+        v.dead = true;
+        setTimeout(() => viruses.splice(vi, 1), 500);
+        playSound('hitSound');
+        score += 5;
+        if (score > highScore) {
+          highScore = score;
+          localStorage.setItem("level-5a-highscore", highScore);
+        }
+        scoreDisplay.textContent = `Score: ${score} | High Score: ${highScore}`;
+        if ([100, 200, 300, 400, 500, 600, 700, 800, 900].includes(score)) speed += 0.5;
+      }
+    });
+  });
+
+  for (let v of viruses) {
+    if (v.y + 30 >= gridSize * rows) {
+      gameActive = false;
+      playSound('alertSound');
+      document.getElementById("controls").style.display = "none";
+      scoreDisplay.style.display = "none";
+      noiseLoop.pause();
+      noiseLoop.currentTime = 0;
+      showFinalMessage();
+      return;
+    }
+  }
+
+  if (score >= 1000) {
+    gameActive = false;
+    noiseLoop.pause();
+    noiseLoop.currentTime = 0;
+    alert("Kamu telah melampaui sistem.");
+    window.location.href = "secret.html";
+  }
+
+  requestAnimationFrame(update);
+}
+
+function spawnVirus() {
+  if (!gameActive) return;
+  let col = Math.floor(Math.random() * cols);
+  viruses.push({ x: col, y: -30, dead: false });
+  setTimeout(spawnVirus, Math.max(200, 1000 - Math.min(score, 800)));
+}
+
+function showFinalMessage() {
+  const message = "Aku tahu ini berat... Tapi kamu sudah sejauh ini. Sistem utama sudah mulai runtuh dan aku berhasil melemahkan keamanannya dari dalam. Sekarang hanya kamu yang bisa menyelesaikan ini. Jalankan aplikasi Server_Orion.exe. Itu satu-satunya jalan. Percayalah padaku... kamu akan aman di sana. Mereka tidak akan bisa menjangkaumu lagi jika kamu masuk sekarang.";
+
+  let i = 0;
+  finalPopup.style.display = "block";
+  finalText.textContent = "";
+
+  typeInterval = setInterval(() => {
+    if (i < message.length) {
+      finalText.textContent += message.charAt(i);
+      if (i % 3 === 0) {
+        playSound('typeSound');
+      }
+      i++;
+    } else {
+      clearInterval(typeInterval);
+    }
+  }, 35);
+}
+
+function goToNextLevel() {
+  noiseLoop.pause();
+  noiseLoop.currentTime = 0;
+  window.location.href = 'level-6a.html';
+}
+
+window.onload = () => {
+  spawnVirus();
+  requestAnimationFrame(update);
+
+  const startAudio = () => {
+    noiseLoop.volume = 0.8;
+    noiseLoop.play();
+    window.removeEventListener("click", startAudio);
+  };
+  window.addEventListener("click", startAudio);
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,319 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ular-ularan</title>
+  <style>
+    :root {
+      --bg: #000;
+      --fg: #fff;
+      --border: #aaa;
+      --snake-head: #00ff00;
+    }
+    body.light-mode {
+      --bg: #fff;
+      --fg: #000;
+      --border: #555;
+      --snake-head: #007700;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--fg);
+      font-family: 'Courier New', monospace;
+      text-align: center;
+      padding-top: 20px;
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    #score {
+      margin-bottom: 10px;
+    }
+    #code {
+      margin-bottom: 1px;
+      margin-top: 5px;
+      font-size: 20px;
+      color: #ff0000;
+    }
+    #game {
+      margin: auto;
+      width: 300px;
+      height: 300px;
+      background-color: var(--bg);
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(20, 15px);
+      grid-template-rows: repeat(20, 15px);
+      border: 2px solid var(--border);
+    }
+    .snake {
+      border: 1px solid var(--border);
+    }
+    .head {
+      background-color: var(--snake-head);
+      border: 2px solid var(--border);
+      position: relative;
+    }
+    .head::before, .head::after {
+      content: '';
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: var(--fg);
+      top: 3px;
+      border-radius: 50%;
+    }
+    .head::before {
+      left: 1px;
+    }
+    .head::after {
+      right: 1px;
+    }
+    .food {
+      background-color: var(--fg);
+      border: 1px solid var(--bg);
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(3, 50px);
+      grid-template-rows: repeat(3, 50px);
+      gap: 5px;
+      justify-content: center;
+      margin-top: 15px;
+    }
+    .controls button, .controls label {
+      font-size: 16px;
+      padding: 10px;
+      background-color: var(--bg);
+      color: var(--fg);
+      border: 2px solid var(--border);
+      border-radius: 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .controls .empty {
+      pointer-events: none;
+      background: transparent;
+      border: none;
+    }
+    /* Toggle Switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 20px;
+      height: 2px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.4s;
+      border-radius: 10px;
+    }
+    .slider::before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #2196F3;
+    }
+    input:checked + .slider::before {
+      transform: translateX(20px);
+    }
+    #pause-popup, #code-popup {
+      display: none;
+      position: fixed;
+      background: rgba(0, 0, 0, 0.95);
+      color: #fff;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 30px;
+      border: 2px solid #fff;
+      border-radius: 10px;
+    }
+    #pause-popup button, #code-popup button {
+      margin-top: 10px;
+      padding: 8px 20px;
+      font-size: 14px;
+      cursor: pointer;
+      background-color: var(--bg);
+      color: var(--fg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+    }
+    textarea {
+      margin-top: 10px;
+      width: 200px;
+      height: 30px;
+      background-color: var(--bg);
+      color: var(--fg);
+      border: 1px solid var(--border);
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <h1>Ular-ularan</h1>
+  <div id="score">Score: 0</div>
+  <div id="code">Kode Level: SNAKE</div>
+  <div id="game"></div>
+  <div class="controls">
+    <label class="switch">
+      <input type="checkbox" onchange="toggleTheme()">
+      <span class="slider"></span>
+    </label>
+    <button onclick="move('w')">W</button>
+    <button onclick="pauseGame()">II</button>
+    <button onclick="move('a')">A</button>
+    <button class="empty"></button>
+    <button onclick="move('d')">D</button>
+    <button class="empty"></button>
+    <button onclick="move('s')">S</button>
+    <button class="empty"></button>
+  </div>
+  <div id="pause-popup">
+    <p>Game paused</p>
+    <button onclick="resumeGame()">Lanjut</button>
+    <button onclick="goLobby()">Keluar</button>
+  </div>
+  <div id="code-popup">
+    <p>Masukkan kode level:</p>
+    <textarea id="level-code" placeholder="masukkan kode level"></textarea><br>
+    <button onclick="goLobby()">Pergi ke lobi</button>
+  </div>
+  <audio id="btn" src="assets/audio/Button.mp3"></audio>
+  <audio id="eat" src="assets/audio/Get.mp3"></audio>
+  <audio id="alert" src="assets/audio/Alert.mp3"></audio>  <script>
+    const game = document.getElementById("game");
+    const scoreText = document.getElementById("score");
+    const btnSound = document.getElementById("btn");
+    const eatSound = document.getElementById("eat");
+    const alertSound = document.getElementById("alert");
+
+    let snake, food, direction, score, interval;
+
+    function resetGame() {
+      snake = [{ x: 10, y: 10 }];
+      direction = { x: 0, y: 0 };
+      food = spawnFood();
+      score = 0;
+      scoreText.textContent = "Score: " + score;
+      if (interval) clearInterval(interval);
+      interval = setInterval(update, 200);
+      draw();
+    }
+
+    function spawnFood() {
+      let pos;
+      do {
+        pos = { x: Math.floor(Math.random() * 20), y: Math.floor(Math.random() * 20) };
+      } while (snake.some(s => s.x === pos.x && s.y === pos.y));
+      return pos;
+    }
+
+    function draw() {
+      game.innerHTML = '';
+      const base = 255;
+      snake.forEach((s, i) => {
+        const div = document.createElement("div");
+        if (i === 0) {
+          div.className = "head";
+        } else {
+          const factor = Math.pow(0.9, i);
+          const val = Math.max(0, Math.floor(base * factor));
+          div.className = "snake";
+          div.style.backgroundColor = `rgb(0, ${val}, 0)`;
+          div.style.border = '1px solid var(--border)';
+        }
+        div.style.gridColumnStart = s.x + 1;
+        div.style.gridRowStart = s.y + 1;
+        game.appendChild(div);
+      });
+
+      const foodDiv = document.createElement("div");
+      foodDiv.className = "food";
+      foodDiv.style.gridColumnStart = food.x + 1;
+      foodDiv.style.gridRowStart = food.y + 1;
+      game.appendChild(foodDiv);
+    }
+
+    function update() {
+      if (direction.x === 0 && direction.y === 0) return;
+
+      const head = {
+        x: (snake[0].x + direction.x + 20) % 20,
+        y: (snake[0].y + direction.y + 20) % 20
+      };
+
+      if (snake.some(s => s.x === head.x && s.y === head.y)) {
+        alertSound.play();
+        clearInterval(interval);
+        setTimeout(() => resetGame(), 500);
+        return;
+      }
+
+      snake.unshift(head);
+
+      if (head.x === food.x && head.y === food.y) {
+        eatSound.play();
+        food = spawnFood();
+        score++;
+        scoreText.textContent = "Score: " + score;
+      } else {
+        snake.pop();
+      }
+
+      draw();
+    }
+
+    function move(dir) {
+      btnSound.play();
+      if (dir === "w" && direction.y === 0) direction = { x: 0, y: -1 };
+      if (dir === "s" && direction.y === 0) direction = { x: 0, y: 1 };
+      if (dir === "a" && direction.x === 0) direction = { x: -1, y: 0 };
+      if (dir === "d" && direction.x === 0) direction = { x: 1, y: 0 };
+    }
+
+    function pauseGame() {
+      btnSound.play();
+      clearInterval(interval);
+      document.getElementById("pause-popup").style.display = "block";
+    }
+
+    function resumeGame() {
+      btnSound.play();
+      interval = setInterval(update, 200);
+      document.getElementById("pause-popup").style.display = "none";
+    }
+
+    function goLobby() {
+      btnSound.play();
+      window.location.href = "level-4a2.html";
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle("light-mode");
+    }
+
+    resetGame();
+  </script></body>
+</html>

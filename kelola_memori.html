@@ -1,0 +1,251 @@
+<!DOCTYPE html><html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Kelola Memori</title>
+  <style>
+    body {
+      background: #000;
+      color: #0f0;
+      font-family: monospace;
+      text-align: center;
+      padding: 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      gap: 10px;
+      justify-content: center;
+      margin: 20px auto;
+    }
+    .file {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100px;
+      height: 100px;
+      background-color: #001100;
+      border: 1px solid #0f0;
+      cursor: pointer;
+      position: relative;
+    }
+    .file img {
+      width: 40px;
+      height: 40px;
+    }
+    .file span {
+      margin-top: 5px;
+      font-size: 10px;
+      color: #0f0;
+      word-break: break-word;
+      text-align: center;
+    }
+    #popupMenu {
+      display: none;
+      position: absolute;
+      background: #fff;
+      color: #000;
+      border: 1px solid #333;
+      z-index: 1000;
+      font-family: monospace;
+    }
+    #popupMenu button {
+      display: block;
+      width: 100%;
+      background: #fff;
+      color: #000;
+      border: none;
+      padding: 6px 10px;
+      text-align: left;
+      cursor: pointer;
+    }
+    #popupMenu button:hover {
+      background: #eee;
+    }
+    #popupMenu button.disabled {
+      color: #888;
+      cursor: not-allowed;
+    }
+    #loadingPopup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #111;
+      color: #0f0;
+      border: 1px solid #0f0;
+      padding: 30px;
+      font-family: monospace;
+      z-index: 9999;
+    }
+    #textViewer {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 300px;
+      height: 400px;
+      background: #111;
+      color: #0f0;
+      border: 1px solid #0f0;
+      font-family: monospace;
+      z-index: 9999;
+      overflow-y: auto;
+    }
+    #textContent {
+      padding: 15px;
+      white-space: pre-wrap;
+    }
+    .close-btn {
+      position: absolute;
+      top: 5px;
+      right: 10px;
+      color: red;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #levelCode {
+      margin-top: 30px;
+      font-size: 14px;
+      color: #0f0;
+    }
+    #backButton {
+      margin-top: 40px;
+      padding: 10px 20px;
+      background: #000;
+      color: #0f0;
+      border: 1px solid #0f0;
+      cursor: pointer;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <h1>Kelola Memori</h1>
+  <p>Telusuri file-file berikut untuk mengetahui informasi tersembunyi.</p>
+  <div class="grid" id="fileGrid"></div>
+  <div id="popupMenu"></div>
+  <div id="loadingPopup">Membuka file...</div>
+  <div id="textViewer">
+    <div class="close-btn" onclick="closeViewer()">x</div>
+    <pre id="textContent"></pre>
+  </div>
+  <p id="levelCode">Kode Level: KLMEM</p>
+  <button id="backButton" onclick="location.href='level-4b1.html'">Kembali ke Desktop</button>
+  <audio id="buttonSound" src="assets/audio/button.mp3" preload="auto"></audio>
+  <audio id="alertSound" src="assets/audio/alert.mp3" preload="auto"></audio>  <script>
+    let fileNames = [
+      "echo_log.rid", "XOXO.html", "trace01.vlog", "gen_seed.dna",
+      "ular.html", "ghost_data.bin", "psych_trace.vlog", "bio_id.sig",
+      "mem_mirror.sav", "life_frag.ram", "heart_bpm.x", "dream.tmp",
+      "loopback_3.drm", "xray_ref.map"
+    ];
+
+    let fileContents = {};
+    let currentFile = null;
+
+    const grid = document.getElementById("fileGrid");
+    const popupMenu = document.getElementById("popupMenu");
+    const loadingPopup = document.getElementById("loadingPopup");
+    const textViewer = document.getElementById("textViewer");
+    const textContent = document.getElementById("textContent");
+
+    fetch("assets/media/orion_logs.json")
+      .then(res => res.json())
+      .then(data => fileContents = data);
+
+    function renderFiles() {
+      grid.innerHTML = "";
+      fileNames.forEach(name => {
+        const div = document.createElement("div");
+        div.className = "file";
+        div.dataset.filename = name;
+        div.innerHTML = `
+          <img src="assets/images/file.png">
+          <span>${name}</span>
+        `;
+        div.ondblclick = (e) => {
+          e.preventDefault();
+          currentFile = div;
+          showMenu(e.pageX, e.pageY);
+        };
+        grid.appendChild(div);
+      });
+    }
+
+    function showMenu(x, y) {
+      const filename = currentFile.dataset.filename;
+      playSound("buttonSound");
+      popupMenu.style.left = `${x}px`;
+      popupMenu.style.top = `${y}px`;
+      popupMenu.style.display = "block";
+      popupMenu.innerHTML = `
+        <button onclick="openFile('${filename}')">Open</button>
+        <button onclick="renameFile()">Rename</button>
+        <button onclick="alert('Paste dinonaktifkan.')" class='disabled'>Paste</button>
+        <button onclick="deleteFile()">Delete</button>
+        <button onclick="alert('Tidak dapat mengunggah file.')">Upload</button>
+        <button onclick="closeMenu()">Close</button>
+      `;
+    }
+
+    function openFile(name) {
+      closeMenu();
+      loadingPopup.style.display = "block";
+      setTimeout(() => {
+        loadingPopup.style.display = "none";
+        if (name === "XOXO.html" || name === "ular.html") {
+          alert("Terjadi masalah! Kode Error: 0512");
+        } else {
+          const content = fileContents[name + ".txt"] || "[File tidak memiliki isi.]";
+          textContent.textContent = content;
+          textViewer.style.display = "block";
+        }
+      }, 1000);
+    }
+
+    function closeViewer() {
+      textViewer.style.display = "none";
+    }
+
+    function renameFile() {
+      const oldName = currentFile.dataset.filename;
+      const newName = prompt("Masukkan nama baru:", oldName);
+      if (newName && newName.trim() !== "") {
+        const index = fileNames.indexOf(oldName);
+        fileNames[index] = newName.trim();
+        renderFiles();
+      }
+      closeMenu();
+    }
+
+    function deleteFile() {
+      const name = currentFile.dataset.filename;
+      const index = fileNames.indexOf(name);
+      if (index !== -1) {
+        fileNames.splice(index, 1);
+        renderFiles();
+      }
+      closeMenu();
+    }
+
+    function closeMenu() {
+      popupMenu.style.display = "none";
+    }
+
+    function playSound(id) {
+      const sfx = document.getElementById(id);
+      sfx.currentTime = 0;
+      sfx.play();
+    }
+
+    window.addEventListener("click", function(e) {
+      if (!popupMenu.contains(e.target)) closeMenu();
+    });
+
+    renderFiles();
+  </script></body>
+</html>

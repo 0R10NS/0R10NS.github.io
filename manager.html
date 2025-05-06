@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Progress Manager</title>
+  <style>
+    @font-face {
+      font-family: 'VT323';
+      src: url('assets/media/VT323-Regular.ttf') format('truetype');
+      font-display: swap;
+    }
+    @font-face {
+  font-family: 'fontello';
+  src: url('assets/media/fontello.ttf') format('truetype');
+}
+.icon-menu:before {font-family: 'fontello'; content: '\f0c9';}
+
+    :root {
+      --bg-light: #f9f9f9;
+      --text-light: #333;
+      --bg-dark: #121212;
+      --text-dark: #e0e0e0;
+      --header-bg: #007bff;
+      --border-light: #ddd;
+      --border-dark: #444;
+      --modal-bg-light: white;
+      --modal-bg-dark: #222;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    body.light {
+      background-color: var(--bg-light);
+      color: var(--text-light);
+    }
+
+    body.dark {
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    h1 {
+      text-align: center;
+      margin: 50px 0;
+      font-size: 32px;
+    }
+
+    .button-group {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    button {
+      background-color: #019901;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+      transform: scale(1.05);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: auto;
+      max-width: 1000px;
+      animation: fadeIn 0.6s ease-in-out;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      font-size: 16px;
+    }
+
+    body.light th {
+      background-color: var(--header-bg);
+      color: white;
+    }
+
+    body.dark th {
+      background-color: #333;
+      color: var(--text-dark);
+    }
+
+    body.light td, body.light th {
+      background-color: white;
+      border: 1px solid var(--border-light);
+    }
+
+    body.dark td, body.dark th {
+      background-color: #1e1e1e;
+      border: 1px solid var(--border-dark);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    #menuToggle {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      cursor: pointer;
+      font-family: 'fontello';
+      font-size: 24px;
+      padding: 10px;
+    }
+
+    #menuDropdown {
+      position: absolute;
+      top: 60px;
+      right: 20px;
+      background: white;
+      color: #333;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 10px 20px;
+      display: none;
+      z-index: 10;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    body.dark #menuDropdown {
+      background: #222;
+      color: #eee;
+      border-color: #555;
+    }
+
+    .menu-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 8px 0;
+    }
+
+    .menu-item label {
+      font-size: 16px;
+    }
+
+    .menu-item input[type="checkbox"] {
+      transform: scale(1.2);
+    }
+
+    .data-col {
+      display: none;
+    }
+
+    .show-data .data-col {
+      display: table-cell;
+    }
+
+    @media (max-width: 600px) {
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+      thead tr {
+        display: none;
+      }
+      td {
+        border: none;
+        padding-left: 50%;
+        position: relative;
+        margin-bottom: 10px;
+      }
+      td::before {
+        position: absolute;
+        left: 10px;
+        top: 12px;
+        font-weight: bold;
+      }
+      td:nth-of-type(1)::before { content: "Key"; }
+      td:nth-of-type(2)::before { content: "Data"; }
+      
+    }
+
+    #modalOverlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    #modalBox {
+      background-color: var(--modal-bg-light);
+      color: #000;
+      padding: 20px;
+      border-radius: 10px;
+      min-width: 300px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    body.dark #modalBox {
+      background-color: var(--modal-bg-dark);
+      color: #fff;
+    }
+
+    #modalButtons {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    #modalButtons button {
+      padding: 8px 16px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body class="dark">
+  <div id="menuToggle"><i class="icon-menu"></i></div>
+  <div id="menuDropdown">
+    <div class="menu-item">
+      <label>Mode Gelap</label>
+      <input type="checkbox" id="themeSwitch" checked />
+    </div>
+    <div class="menu-item">
+      <label>Aktifkan Mode Developer</label>
+      <input type="checkbox" id="devSwitch" />
+    </div>
+  </div>
+
+  <h1>Progress Manager</h1>
+
+  <div class="button-group">
+    <button onclick="goBack()">Kembali</button>
+    <button onclick="handleDeleteAll()">Hapus Semua</button>
+  </div>
+
+  <table id="storageTable">
+    <thead>
+      <tr>
+        <th>Key</th>
+        <th class="data-col">Data</th>
+        
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div id="modalOverlay">
+    <div id="modalBox">
+      <div id="modalMessage">Yakin?</div>
+      <div id="modalButtons">
+        <button onclick="closeModal(false)">Batal</button>
+        <button onclick="closeModal(true)">Oke</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const menuToggle = document.getElementById('menuToggle');
+    const menuDropdown = document.getElementById('menuDropdown');
+    const themeSwitch = document.getElementById('themeSwitch');
+    const devSwitch = document.getElementById('devSwitch');
+    const storageTable = document.getElementById('storageTable').querySelector('tbody');
+    const table = document.getElementById('storageTable');
+
+    let modalResolve;
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modalMessage = document.getElementById('modalMessage');
+
+    menuToggle.addEventListener('click', () => {
+      menuDropdown.style.display = menuDropdown.style.display === 'block' ? 'none' : 'block';
+    });
+
+    function applyTheme(theme) {
+      document.body.className = theme;
+      themeSwitch.checked = theme === 'dark';
+      localStorage.setItem('theme', theme);
+    }
+
+    function applyMode(mode) {
+      devSwitch.checked = mode === 'developer';
+      localStorage.setItem('mode', mode);
+      table.classList.toggle('show-data', mode === 'developer');
+      renderStorage();
+    }
+
+    themeSwitch.addEventListener('change', () => {
+      const newTheme = themeSwitch.checked ? 'dark' : 'light';
+      applyTheme(newTheme);
+    });
+
+    devSwitch.addEventListener('change', () => {
+      const newMode = devSwitch.checked ? 'developer' : 'player';
+      applyMode(newMode);
+    });
+
+    function renderStorage() {
+      const mode = localStorage.getItem('mode') || 'player';
+      storageTable.innerHTML = '';
+      const keys = Object.keys(localStorage).sort();
+      const filteredKeys = mode === 'player'
+        ? keys.filter(key => key.toLowerCase().includes("level"))
+        : keys;
+
+      if (filteredKeys.length === 0) {
+        storageTable.innerHTML = `<tr><td colspan="${mode === 'developer' ? 3 : 2}">Tidak ada data${mode === 'player' ? ' level' : ''} di localStorage.</td></tr>`;
+        return;
+      }
+
+      filteredKeys.forEach((key) => {
+        const value = localStorage.getItem(key);
+        const truncatedValue = value.length > 30 ? value.substring(0, 30) + '...' : value;
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${key}</td>
+          ${mode === 'developer' ? `<td>${truncatedValue}</td>` : ''}
+          <td><button onclick="handleDelete('${key}')">Hapus</button></td>
+        `;
+        storageTable.appendChild(row);
+      });
+    }
+
+    function showModal(message) {
+      modalMessage.textContent = message;
+      modalOverlay.style.display = 'flex';
+      return new Promise(resolve => {
+        modalResolve = resolve;
+      });
+    }
+
+    function closeModal(confirmed) {
+      modalOverlay.style.display = 'none';
+      modalResolve(confirmed);
+    }
+
+    async function handleDelete(key) {
+      const confirmed = await showModal(`Yakin mau hapus data "${key}"?`);
+      if (confirmed) {
+        localStorage.removeItem(key);
+        renderStorage();
+      }
+    }
+
+    async function handleDeleteAll() {
+      const confirmed = await showModal('Yakin mau hapus semua data?');
+      if (confirmed) {
+        localStorage.clear();
+        renderStorage();
+      }
+    }
+
+    function goBack() {
+      window.location.href = 'index.html';
+    }
+
+    applyTheme(localStorage.getItem('theme') || 'dark');
+    applyMode(localStorage.getItem('mode') || 'player');
+  </script>
+</body>
+</html>

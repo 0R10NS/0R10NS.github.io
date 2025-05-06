@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Level 6A - Arsip Orion</title>
+  <style>
+    body {
+      background: #000;
+      color: #0f0;
+      font-family: monospace;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: #001100;
+      border: 2px solid #0f0;
+      padding: 20px;
+      width: 90%;
+      max-width: 720px;
+      box-shadow: 0 0 15px #0f0;
+    }
+    h1, h2, p {
+      margin: 10px 0;
+    }
+    input, button {
+      background: #002200;
+      color: #0f0;
+      border: 1px solid #0f0;
+      padding: 8px;
+      margin: 5px;
+      font-family: monospace;
+    }
+    .file-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .file {
+      background: #001f00;
+      border: 1px solid #0f0;
+      padding: 10px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      transition: 0.2s ease;
+      width: 100px;
+      height: 100px;
+      box-sizing: border-box;
+    }
+    .file:hover {
+      background: #003300;
+      box-shadow: 0 0 5px #0f0;
+    }
+    .file img {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 5px;
+    }
+    .file span {
+      font-size: 9px;
+      text-align: center;
+      word-wrap: break-word;
+    }
+    .file.deleted { display: none; }
+    .popup, .app-popup {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+      background: rgba(0,0,0,0.9);
+    }
+    .popup-content, .app-content {
+      background: #001100;
+      border: 1px solid #0f0;
+      padding: 20px;
+      width: 300px;
+      height: 450px;
+      color: #0f0;
+      overflow-y: auto;
+    }
+    .popup-content img {
+      max-width: 100%;
+      margin-top: 10px;
+      border: 1px solid #0f0;
+    }
+  </style>
+</head>
+<body>
+  <div id="loadingBar" style="display:none; position:fixed; top:0; left:0; height:5px; background:#0f0; width:0%; transition: width 3s linear; z-index:99;"></div>
+  <div id="notifPopup" class="popup" style="display:none;">
+    <div class="popup-content">
+      <p id="notifText"></p>
+      <button onclick="confirmNotif()">OK</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="form-section">
+      <h1>Verifikasi Identitas</h1>
+      <input type="text" id="playerID" placeholder="Masukkan ID"><br>
+      <input type="date" id="birthDate"><br>
+      <button onclick="verifyID()">Masuk</button>
+    </div>
+    <div id="select-section" style="display:none">
+      <h1>Verifikasi Identitas</h1>
+      <p>Pilih ID milikmu yang sebenarnya:</p>
+      <div id="id-options"></div>
+    </div>
+    <div id="file-section" style="display:none">
+      <h2>Direktori Arsip Orion</h2>
+      <div class="file-grid" id="fileGrid"></div>
+    </div>
+    <p style="text-align:center; margin-top:40px;">kode level: <strong>4R51P</strong></p>
+  </div>
+
+  <div id="popup" class="popup" style="display:none">
+    <div class="popup-content">
+      <p id="popupText"></p>
+      <img id="popupImage" src="" alt="" style="display:none;">
+      <button onclick="closePopup()">Tutup</button>
+    </div>
+  </div>
+
+  <div id="appPopup" class="app-popup" style="display:none">
+    <div class="app-content">
+      <h3>Upload Manager v1.0</h3>
+      <p>Masukkan Kredensial:</p>
+      <input type="text" id="oldID" placeholder="ID Sebelumnya"><br>
+      <input type="text" id="newID" placeholder="ID Terbaru"><br>
+      <button onclick="submitApp()">Kirim</button>
+      <button onclick="closeApp()">Batal</button>
+    </div>
+  </div>
+
+  <audio id="buttonSound" src="assets/audio/button.mp3" preload="auto"></audio>
+  <audio id="alertSound" src="assets/audio/alert.mp3" preload="auto"></audio>
+
+<script>
+// --- Tambahan localStorage untuk level-6a ---
+function saveProgress() {
+  const deletedFiles = Array.from(document.querySelectorAll('.file.deleted')).map(f => f.innerText.trim());
+  localStorage.setItem('level6a_orionSavedID', savedID);
+  localStorage.setItem('level6a_orionSavedBirth', savedBirth);
+  localStorage.setItem('level6a_orionDeletedFiles', JSON.stringify(deletedFiles));
+}
+
+function loadProgress() {
+  savedID = localStorage.getItem('level6a_orionSavedID') || "";
+  savedBirth = localStorage.getItem('level6a_orionSavedBirth') || "";
+  const deleted = JSON.parse(localStorage.getItem('level6a_orionDeletedFiles') || '[]');
+  return { deleted };
+}
+
+function clearProgress() {
+  localStorage.removeItem('level6a_orionSavedID');
+  localStorage.removeItem('level6a_orionSavedBirth');
+  localStorage.removeItem('level6a_orionDeletedFiles');
+}
+
+let savedID = "", savedBirth = "", lastOpened = null;
+let attemptsLeft = 3;
+const correctFiles = ['upload_app.exe'];
+const fileContents = {
+  'memo  peneliti.txt': 'assets/media/memo_peneliti.txt',
+  'Open_Me.1st': 'assets/media/Open_Me.1st',
+  'Experiment1.png': '',
+  'Experiment2.png': '',
+  'rekaman  interview.txt': 'assets/media/rekaman_interview.txt',
+  'record.lst': null,
+  'debug_log.txt': 'assets/media/debug_log.txt',
+  'upload_app.exe': '',
+  'VIRUS_dummy_0_5_1_2.png': '',
+  'hasil_scan.txt': 'assets/media/hasil_scan.txt',
+  'Dr-Ried.png': '',
+  'laporan  orion.doc': 'assets/media/laporan_orion.txt',
+  'RID.png': ''
+};
+
+function play(id) {
+  const s = document.getElementById(id);
+  s.currentTime = 0;
+  s.play();
+}
+
+function verifyID() {
+  let id = document.getElementById('playerID').value.trim();
+  let b = document.getElementById('birthDate').value;
+  if (!id || !b) return alert('Lengkapi data.');
+  let match = id.match(/^[A-Za-z]+\d{3,4}$/);
+  if (!match) return alert('ID harus berisi nama diikuti 3-4 digit angka.');
+  let year = parseInt(b.split("-")[0]);
+  if (year >= 2007) return alert("Umur kamu belum cukup untuk mengakses arsip Orion.");
+  savedID = id;
+  savedBirth = b;
+  saveProgress();
+  genOptions(id, b);
+}
+
+function genOptions(id, b) {
+  document.getElementById('form-section').style.display = 'none';
+  document.getElementById('select-section').style.display = 'block';
+  const [year, month, day] = b.split("-");
+  const baseName = id.replace(/\d+/, "");
+  const baseNum = parseInt(id.match(/\d+/)[0]);
+  const real = `${id}|${b}`;
+  let opts = [real];
+  for (let i = 0; i < 4; i++) {
+    let d = String((parseInt(day) + i + 1) % 28 + 1).padStart(2, '0');
+    opts.push(`${id}|${year}-${month}-${d}`);
+  }
+  for (let i = 0; i < 5; i++) {
+    let n = baseNum + i + 1;
+    opts.push(`${baseName}${n}|${year}-${month}-${day}`);
+  }
+  opts = [...new Set(opts)].sort(() => 0.5 - Math.random());
+  const ctn = document.getElementById('id-options');
+  ctn.innerHTML = "";
+  opts.forEach(o => {
+    const btn = document.createElement('button');
+    btn.textContent = o;
+    btn.onclick = () => {
+      if (o === real) {
+        play('buttonSound');
+        document.getElementById('select-section').style.display = 'none';
+        showFiles();
+      } else {
+        play('alertSound');
+        attemptsLeft--;
+        if (attemptsLeft > 0) {
+          alert(`id salah! ${attemptsLeft} kesempatan tersisa`);
+        } else {
+          alert("Kesempatan habis. Progress dihapus. Kembali ke lobi.");
+          clearProgress();
+          window.location.href = 'index.html';
+        }
+      }
+    };
+    ctn.appendChild(btn);
+  });
+}
+
+function showFiles() {
+  document.getElementById('file-section').style.display = 'block';
+  const g = document.getElementById('fileGrid');
+  Object.keys(fileContents).forEach(n => {
+    const f = document.createElement('div');
+    f.className = 'file';
+    f.innerHTML = `<img src='assets/images/file.png'><span>${n}</span>`;
+    f.onclick = () => openFile(f, n);
+    g.appendChild(f);
+  });
+}
+
+function openFile(el, n) {
+  play('buttonSound');
+  const isMedia = typeof fileContents[n] === 'string' && fileContents[n].startsWith('assets/media/');
+  document.getElementById('popupText').innerText = isMedia ? '' : (fileContents[n] || '');
+  const img = document.getElementById('popupImage');
+  img.style.display = 'none';
+  if (n.endsWith('.png')) {
+    img.src = `assets/images/${n}`;
+    img.style.display = 'block';
+  }
+  if (n === 'record.lst') {
+    const lines = [
+      "______________________",
+      "RIED-1001|1983-05-14",
+      "______________________",
+      "RIED-1822|1983-05-14",
+      "______________________",
+      "RIED-2543|1983-05-14",
+      "______________________",
+      "RIED-3164|1983-05-14",
+      "______________________",
+      "RIED-4225|1983-05-14",
+      "______________________",
+      "RIED-5036|1983-05-14",
+      "______________________",
+      "RIED-5910|1983-05-14",
+      "______________________",
+      "Selena7271|1992-10-09",
+      "______________________",
+      "RIED-0512|1983-05-14",
+      "______________________",
+      `${savedID}|${savedBirth}`,
+      "______________________"
+    ];
+    document.getElementById('popupText').innerText = lines.join('\n');
+  } else if (isMedia) {
+    fetch(fileContents[n]).then(res => res.text()).then(text => {
+      document.getElementById('popupText').innerText = text;
+    });
+  }
+  lastOpened = el;
+  document.getElementById('popup').style.display = 'flex';
+  if (n === 'upload_app.exe') {
+    document.getElementById('popup').style.display = 'none';
+    document.getElementById('appPopup').style.display = 'flex';
+  }
+}
+
+function closePopup() {
+  document.getElementById('popup').style.display = 'none';
+  if (lastOpened && !correctFiles.includes(lastOpened.innerText.trim())) {
+    setTimeout(() => {
+      play('alertSound');
+      alert('File rusak!');
+      lastOpened.classList.add('deleted');
+      saveProgress();
+      lastOpened = null;
+    }, 100);
+  }
+}
+
+function closeApp() {
+  document.getElementById('appPopup').style.display = 'none';
+}
+
+function submitApp() {
+  play('buttonSound');
+  const o = document.getElementById('oldID').value.trim();
+  const n = document.getElementById('newID').value.trim();
+  document.getElementById('appPopup').style.display = 'none';
+  showLoadingBar();
+  setTimeout(() => {
+    if (o === 'RIED-0512' && n === savedID) {
+      showNotif("Akses menuju pemulihan berhasil!", () => {
+        window.location.href = 'level-7a.html';
+      });
+    } else {
+      showNotif("Kredensial tidak valid! Semua data terhapus", () => {
+        clearProgress();
+        window.location.href = 'index.html';
+      });
+    }
+  }, 3000);
+}
+
+function showLoadingBar() {
+  const bar = document.getElementById('loadingBar');
+  bar.style.width = '0%';
+  bar.style.display = 'block';
+  setTimeout(() => { bar.style.width = '100%'; }, 10);
+  setTimeout(() => { bar.style.display = 'none'; }, 3000);
+}
+
+function showNotif(text, callback) {
+  document.getElementById('notifText').innerText = text;
+  document.getElementById('notifPopup').style.display = 'flex';
+  document.getElementById('notifPopup').dataset.callback = callback;
+}
+
+function confirmNotif() {
+  const callback = document.getElementById('notifPopup').dataset.callback;
+  document.getElementById('notifPopup').style.display = 'none';
+  if (callback) eval(callback)();
+}
+
+window.onload = function() {
+  const { deleted } = loadProgress();
+  if (savedID && savedBirth) {
+    document.getElementById('form-section').style.display = 'none';
+    showFiles();
+    setTimeout(() => {
+      deleted.forEach(name => {
+        const files = document.querySelectorAll('.file');
+        files.forEach(f => {
+          if (f.innerText.trim() === name) {
+            f.classList.add('deleted');
+          }
+        });
+      });
+    }, 100);
+  }
+};
+</script>
+</body>
+</html>

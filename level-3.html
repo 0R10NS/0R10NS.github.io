@@ -1,0 +1,99 @@
+<!DOCTYPE html><html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>REKAMAN</title>
+<style>
+body { background:#000; color:#0f0; font-family:monospace; text-align:center; padding:10px; }
+#maze { display:inline-block; font-size:0; line-height:0; background:#003300; padding:6px; border:2px solid #0f0; margin-bottom:10px; }
+#hud, button { margin-top:10px; background:#002200; color:#0f0; border:1px solid #0f0; padding:6px 12px; cursor:pointer; }
+#popup,#phonePopup { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); display:none; justify-content:center; align-items:center; z-index:20; padding:1px; flex-direction:column; }
+#popup>div,#phonePopup>div { background:#001100; padding:1px; border:2px solid #0f0; max-width:320px; display:flex; flex-direction:column; align-items:center; }
+#popupText { width:300px; height:200px; background:#001100; color:#0f0; border:none; resize:none; font-family:monospace; font-size:10px; padding:8px; overflow-y:auto; }
+#popup img { width:80px; height:auto; border:2px solid #0f0; }
+</style>
+</head>
+<body>
+<h1 style="margin-bottom:10px;">Rekaman</h1>
+<div id="maze"></div>
+<div>
+<button onclick="move('up')">Â</button><br>
+<button onclick="move('left')">Я</button>
+<button onclick="interact()" id="actionBtn">Buka</button>
+<button onclick="move('right')">R</button><br>
+<button onclick="move('down')">V</button>
+</div>
+<div id="hud"></div>
+<div id="popup">
+<div>
+<img src="assets/images/selena-1.png" id="selenaImg">
+<textarea id="popupText" readonly></textarea>
+<div id="popupButtons" style="margin-top:10px;"></div>
+<button onclick="skipDialog()">Skip</button>
+<button onclick="closePopup()">Tutup</button>
+</div>
+</div>
+<div id="phonePopup">
+<iframe id="phoneFrame" src="" style="width:90%;height:80%;border:2px solid #0f0;background:#000;"></iframe>
+<button onclick="closePhonePopup()">Tutup</button>
+</div>
+<div class="footer">Kode Level: V1CT1M</div>
+<audio id="stepSound" src="assets/audio/step.mp3" preload="auto"></audio>
+<audio id="buttonSound" src="assets/audio/button.mp3" preload="auto"></audio>
+<audio id="doorSound" src="assets/audio/pintu.mp3" preload="auto"></audio>
+<audio id="dialogSound" src="assets/audio/dialog.mp3" preload="auto"></audio>
+<script>
+const grid = [["0","0","0","0","0","0","0","0","0","0","0","0","0"],["0","c","1","1","0","1","2","1","0","1","1","1","0"],["0","1","0","1","0","1","0","1","0","1","0","1","0"],["0","1","1","1","1","1","0","1","2","1","a","1","0"],["0","0","0","0","0","0","0","1","0","0","0","1","0"],["0","1","1","1","0","1","1","1","0","1","1","1","0"],["0","1","0","1","0","1","0","0","0","1","0","0","0"],["0","1","0","1","2","1","1","1","1","1","1","b","0"],["0","1","0","0","0","0","0","0","0","0","0","0","0"],["0","1","1","1","1","1","2","1","1","2","1","1","0"],["0","0","0","0","0","0","0","0","0","0","0","1","0"],["0","x","1","1","2","1","1","2","1","1","2","1","0"],["0","0","0","0","0","0","0","0","0","0","0","0","0"]];
+const imageMap = {"0":"dinding.png","1":"lantai.png","2":"pintu.png","a":"tape.png","b":"batre.png","c":"kaset.png","x":"phone.png"};
+let player = {x:1,y:5}, inventory = {a:false,b:false,c:false}, canMove=true, dialogInterval=null;
+const storyText = `Kalau kamu mendengar ini… berarti aku gagal keluar dari fasilitas ini.\nAku... aku nggak tahu berapa banyak waktu yang tersisa sebelum mereka menghapus semua jejakku.\n\nTapi kamu harus tahu...\nProyek Orion bukan sekadar pengendalian memori. Ini tentang menciptakan realitas baru..\n..dengan memanipulasi apa yang kita ingat… dan apa yang kita lupakan.\n\nMereka bilang mereka ingin “mengobati trauma”,\ntapi yang mereka lakukan adalah membunuh kenangan… perlahan…\ndan menggantinya dengan kebohongan.\n\nAku menemukan file utama, tapi... aku tidak sempat mengunggahnya.\nSatu-satunya bukti ada dalam rekaman ini, dan satu jalur keluar..\nhanya satu jalan yang akan membawamu ke kebenaran.\n\nYang lainnya… hanya pantulan.\nDistorsi.\nDunia yang mereka rancang agar kamu percaya itu nyata.\n\nJadi…\nkalau kamu punya cukup keberanian…\nikuti jalur yang berlawanan dari yang mereka tunjukkan.\n\nkalau kamu yang mendengar ini…\nTerima kasih… karena tidak menyerah mencari aku.`;
+function playSound(id){const audio=document.getElementById(id);audio?.pause();audio.currentTime=0;audio?.play().catch(()=>{});}
+function saveProgress(){localStorage.setItem('level-3-progress',JSON.stringify({player,inventory,grid}));}
+function loadProgress(){const data=localStorage.getItem('level-3-progress');if(data){const progress=JSON.parse(data);player=progress.player;inventory=progress.inventory;for(let y=0;y<grid.length;y++)for(let x=0;x<grid[y].length;x++)grid[y][x]=progress.grid[y][x];}}
+function drawMaze(){const mazeEl=document.getElementById("maze");mazeEl.innerHTML=grid.map((row,y)=>row.map((cell,x)=>{const src=(x===player.x&&y===player.y)?"player.png":(imageMap[cell]||"lantai.png");return `<img src="assets/images/${src}" width="20" height="20">`;}).join("")+"<br>").join("");updateButton();updateHUD();}
+function move(dir){if(!canMove)return;canMove=false;playSound("stepSound");setTimeout(()=>canMove=true,150);const delta={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[dir],nx=player.x+delta[0],ny=player.y+delta[1];if(nx>=0&&ny>=0&&nx<13&&ny<13&&!["0","2"].includes(grid[ny][nx])){player.x=nx;player.y=ny;drawMaze();saveProgress();}}
+function getAdjacentCoords(){return[[0,-1],[0,1],[-1,0],[1,0]].map(([dx,dy])=>[player.x+dx,player.y+dy]).filter(([x,y])=>x>=0&&y>=0&&x<13&&y<13);}
+function interact(){const adjacent=getAdjacentCoords();for(const[x,y]of adjacent){if(grid[y][x]==="2"){grid[y][x]="1";playSound("doorSound");drawMaze();saveProgress();return;}}
+const cell=grid[player.y][player.x];if(["a","b","c"].includes(cell)){inventory[cell]=true;grid[player.y][player.x]="1";playSound("buttonSound");drawMaze();saveProgress();}else if(cell==="x"){playSound("buttonSound");setTimeout(()=>{showPhonePopup();},200);}else if(Object.values(inventory).every(Boolean)){showStory();}}
+function showPhonePopup() {
+  const buktiKeys = ['level-5b-bukti-1', 'level-5b-bukti-2', 'level-5b-bukti-3'];
+  const hasAllBukti = buktiKeys.every(key => localStorage.getItem(key));
+  const targetLevel = hasAllBukti ? 'level-6b.html' : 'run.html';
+
+  window.location.href = targetLevel;
+}
+function closePhonePopup(){document.getElementById("phoneFrame").src="";document.getElementById("phonePopup").style.display="none";}
+function updateButton() {
+  const btn = document.getElementById("actionBtn");
+  const cell = grid[player.y][player.x];
+  const nearDoor = getAdjacentCoords().some(([x, y]) => grid[y][x] === "2");
+  const hasAllItems = Object.values(inventory).every(Boolean);
+  const buktiKeys = ['level-5b-bukti-1', 'level-5b-bukti-2', 'level-5b-bukti-3'];
+  const hasAllBukti = buktiKeys.every(key => localStorage.getItem(key));
+
+  if (nearDoor) {
+    btn.innerText = "Buka";
+    btn.disabled = false;
+  } else if (["a", "b", "c"].includes(cell)) {
+    btn.innerText = "Ambil";
+    btn.disabled = false;
+  } else if (cell === "x") {
+    btn.innerText = "Buka";
+    btn.disabled = false;
+  } else if (hasAllItems) {
+    btn.innerText = "Play";
+    btn.disabled = hasAllBukti;
+  } else {
+    btn.innerText = "-";
+    btn.disabled = true;
+  }
+}
+function updateHUD(){const items=[];if(inventory.c)items.push("Kaset");if(inventory.a)items.push("Recorder");if(inventory.b)items.push("Baterai");document.getElementById("hud").innerText="Inventory: "+(items.length?items.join(", "):"(kosong)");}
+function showPopup(text,isFinal=false){document.getElementById("popupText").value=text;document.getElementById("popupButtons").innerHTML=isFinal?`<br><button onclick="location.href='level-4a1.html'">Percaya</button><button onclick="location.href='level-4b1.html'">Abaikan</button>`:"";document.getElementById("popup").style.display="flex";}
+function closePopup(){document.getElementById("popup").style.display="none";}
+function showStory(){const popupText=document.getElementById("popupText"),btnContainer=document.getElementById("popupButtons");popupText.value="";btnContainer.innerHTML="";document.getElementById("popup").style.display="flex";playSound("dialogSound");let i=0;dialogInterval=setInterval(()=>{if(i<storyText.length){popupText.value+=storyText[i++];popupText.scrollTop=popupText.scrollHeight;}else{clearInterval(dialogInterval);btnContainer.innerHTML=`<br><button onclick="location.href='level-4a1.html'"><b>Simpan rekaman -Informasi ini terlalu penting untuk diabadikan</b></button><button onclick="location.href='level-4b1.html'"><b>Hapus rekaman -Terlalu banyak variabel yang belum divalidasi</b></button>`;}},80);}
+function skipDialog(){clearInterval(dialogInterval);document.getElementById("dialogSound").pause();document.getElementById("dialogSound").currentTime=0;document.getElementById("popupText").value=storyText;document.getElementById("popupText").scrollTop=9999;document.getElementById("popupButtons").innerHTML=`<br><button onclick="location.href='level-4a1.html'"><b>Simpan rekaman -Informasi ini terlalu penting untuk diabadikan</b></button><button onclick="location.href='level-4b1.html'"><b>Hapus rekaman -Terlalu banyak variabel yang belum divalidasi</b></button>`;}
+loadProgress();
+drawMaze();
+</script>
+</body>
+</html>

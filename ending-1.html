@@ -1,0 +1,169 @@
+<!DOCTYPE html><html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Bad Ending</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #0f0;
+      font-family: monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+    #loginForm, #loadingBarContainer, #popup, #finalPopup {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+    }
+    input {
+      padding: 10px;
+      margin: 5px;
+      background: #001100;
+      border: 1px solid #0f0;
+      color: #0f0;
+    }
+    button {
+      margin-top: 10px;
+      padding: 8px 16px;
+      background: #002200;
+      color: #0f0;
+      border: 1px solid #0f0;
+      cursor: pointer;
+    }
+    #loadingBar {
+      width: 300px;
+      height: 20px;
+      background: #002200;
+      border: 1px solid #0f0;
+      margin-top: 20px;
+      position: relative;
+    }
+    #loadingProgress {
+      background: #0f0;
+      height: 100%;
+      width: 0%;
+    }
+    #finalText {
+      width: 300px;
+      height: 250px;
+      background: #001100;
+      color: #0f0;
+      border: none;
+      padding: 10px;
+      resize: none;
+      font-family: monospace;
+      overflow-y: auto;
+    }
+    .glitch {
+      animation: glitch 0.3s infinite;
+    }
+    @keyframes glitch {
+      0% { transform: translate(0); }
+      20% { transform: translate(-1px, 1px); }
+      40% { transform: translate(-2px, -1px); }
+      60% { transform: translate(1px, 2px); }
+      80% { transform: translate(2px, -2px); }
+      100% { transform: translate(0); }
+    }
+    #levelCode {
+      margin-top: 20px;
+      color: #0f0;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Login Sistem</h1>  <div id="loginForm">
+    <input type="text" id="username" placeholder="Nama Pengguna">
+    <input type="password" id="password" placeholder="Kode Level: 134D-N">
+    <button onclick="startLoading()">Login</button>
+  </div>  <div id="loadingBarContainer">
+    <p>Memverifikasi identitas...</p>
+    <div id="loadingBar">
+      <div id="loadingProgress"></div>
+    </div>
+  </div>  <div id="popup" class="glitch">
+    <p>Log berhasil. Anda memiliki 1 informasi terakhir.</p>
+    <button onclick="showFinalPopup()">Buka</button>
+  </div>  <div id="finalPopup">
+    <textarea id="finalText" readonly></textarea>
+    <br>
+    <button onclick="location.href='index.html'">Kembali ke Lobi</button>
+    <p id="levelCode">Kode Level: 134D-N</p>
+  </div><audio id="buttonSound" src="assets/audio/button.mp3" preload="auto"></audio> <audio id="alertSound" src="assets/audio/alert.mp3" preload="auto"></audio>
+
+  <script>
+  document.getElementById("loginForm").style.display = "flex";
+
+  function playSound(id) {
+    const sound = document.getElementById(id);
+    sound.currentTime = 0;
+    sound.play();
+  }
+
+  function startLoading() {
+    const name = document.getElementById("username").value.trim() || "Subjek Tidak Dikenal";
+
+    // Validasi nama yang tidak boleh dipakai
+    const forbiddenPatterns = [/[\d]/, /alven/i, /ried/i, /selena/i, /anonim/i, /anonymous/i, /username/i];
+    for (let pattern of forbiddenPatterns) {
+      if (pattern.test(name)) {
+        alert("Kamu sudah mati sebelumnya");
+        location.href = "index.html";
+        return;
+      }
+    }
+
+    playSound("buttonSound");
+    document.getElementById("loginForm").style.display = "none";
+    document.getElementById("loadingBarContainer").style.display = "flex";
+
+    let progress = 0;
+    const interval = setInterval(() => {
+      if (progress >= 100) {
+        clearInterval(interval);
+        document.getElementById("loadingBarContainer").style.display = "none";
+        document.getElementById("popup").style.display = "flex";
+        playSound("alertSound");
+      } else {
+        progress++;
+        document.getElementById("loadingProgress").style.width = progress + "%";
+      }
+    }, 30);
+
+    window.finalName = name;
+  }
+
+  function typeWriter(text, elementId, speed = 50) {
+    let i = 0;
+    const element = document.getElementById(elementId);
+
+    function type() {
+      if (i < text.length) {
+        element.value += text.charAt(i);
+        if (text.charAt(i) !== ' ' && text.charAt(i) !== '\n') {
+          playSound("buttonSound");
+        }
+        i++;
+        setTimeout(type, speed);
+      }
+    }
+    type();
+  }
+
+  function showFinalPopup() {
+    playSound("buttonSound");
+    const text = `ALERT KEAMANAN\n-----------------------------\nNama: ${window.finalName}\nStatus: TERTANGKAP\n\nSubjek telah mengakses sistem terlarang dan mencoba mengunduh arsip Proyek Orion.\n\nUnit pengamanan telah mengamankan ${window.finalName} di sektor fasilitas utama.\n\nDr. Ried telah dinyatakan hilang dan kemungkinan besar melarikan diri dengan membawa salinan data.\n\nProyek Orion tetap berlanjut.\nTidak ada yang akan tahu kebenarannya.`;
+
+    document.getElementById("popup").style.display = "none";
+    document.getElementById("finalPopup").style.display = "flex";
+    document.getElementById("finalText").value = ""; // Clear sebelum mulai mengetik
+    typeWriter(text, "finalText", 50); // speed = 50ms per karakter
+  }
+</script></body>
+</html>

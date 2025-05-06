@@ -1,0 +1,228 @@
+<!DOCTYPE html><html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>LEVEL 2 - Pemulihan Memori</title>
+<style>
+body { background: #000; color: #0f0; font-family: 'Space Mono', monospace; text-align: center; padding: 20px; }
+.grid { display: grid; grid-template-columns: repeat(3, 100px); gap: 10px; justify-content: center; margin-top: 20px; }
+.cell { border: 2px solid red; background: #010; cursor: pointer; width: 100px; height: 100px; box-sizing: border-box; }
+.cell.recovered { border-color: #0f0; }
+.grid.unified { gap: 0; }
+.grid.unified .cell { border: none; }
+.cell img { width: 100%; height: 100%; filter: blur(10px); transition: filter 0.3s; }
+.cell.recovered img { filter: none; }
+.popup, .loading-overlay, #infoPopup { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 10; }
+.popup-content, .loading-bar, .info-box { background: #010; border: 2px solid #0f0; padding: 20px; text-align: center; color: #0f0; max-width: 400px; }
+.file-button, .recover-btn, .confirm-btn, .info-button { margin: 10px; padding: 10px; background: #020; color: #0f0; border: 1px solid #0f0; cursor: pointer; }
+.info-button.ready { background: #440; color: yellow; border-color: yellow; }
+.loading-bar-container { width: 200px; height: 20px; background: #020; margin-top: 15px; border: 1px solid #0f0; }
+.loading-bar-inner { height: 100%; width: 0; background: #0f0; }
+.dragging { opacity: 0.5; }
+.footer { margin-top: 50px; color: #070; font-size: 14px; }
+#infoText::after { content: "_"; animation: blink 1s steps(2, start) infinite; }
+@keyframes blink { to { visibility: hidden; } }
+</style>
+</head>
+<body><h1>Pemulihan Memori</h1>
+<button class="info-button ready" onclick="tampilkanInfo()">(?)</button>
+<div class="grid" id="grid"></div>
+<button class="confirm-btn" id="confirmBtn" onclick="checkAnswer()" style="display:none;">Konfirmasi</button><div class="popup" id="popup">
+  <div class="popup-content">
+    <p>Pulihkan gambar ini?</p>
+    <button class="recover-btn" onclick="startRecovery()">Recover</button><br>
+    <button class="file-button" onclick="closePopup()">Tutup</button>
+  </div>
+</div><div class="popup" id="infoPopup">
+  <div class="info-box">
+    <h3>Petunjuk</h3>
+    <p id="infoText"></p>
+    <button class="file-button" onclick="tutupInfo()">Tutup</button>
+  </div>
+</div><div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-bar">
+    <p id="loadingText">Memulihkan data...</p>
+    <div class="loading-bar-container">
+      <div class="loading-bar-inner" id="loadingBar"></div>
+    </div>
+  </div>
+</div><div class="footer">Kode Level: 7271V2</div><audio id="buttonSound" src="assets/audio/button.mp3" preload="auto"></audio> <audio id="alertSound" src="assets/audio/alert.mp3" preload="auto"></audio> <audio id="typeSound" src="assets/audio/type.mp3" preload="auto"></audio>
+
+<script>
+const grid = document.getElementById("grid"),
+      popup = document.getElementById("popup"),
+      loadingOverlay = document.getElementById("loadingOverlay"),
+      loadingBar = document.getElementById("loadingBar"),
+      buttonSound = document.getElementById("buttonSound"),
+      alertSound = document.getElementById("alertSound"),
+      typeSound = document.getElementById("typeSound"),
+      confirmBtn = document.getElementById("confirmBtn"),
+      infoPopup = document.getElementById("infoPopup"),
+      infoText = document.getElementById("infoText");
+
+const correctOrder = [
+  "Encryption3", "Encryption9", "Encryption1",
+  "Encryption7", "Encryption5", "Encryption2",
+  "Encryption4", "Encryption8", "Encryption6"
+];
+
+let recovered = Array(9).fill(false),
+    currentSlot = 0,
+    dragSrc = null,
+    dotCount = 0,
+    loadingTextInterval = null;
+
+function playSound(s) {
+  s.currentTime = 0;
+  s.play();
+}
+
+function saveProgress() {
+  const gridOrder = Array.from(grid.children).map(c => c.querySelector("img").src.match(/Encryption\d+/)[0]);
+  localStorage.setItem("level2Progress", JSON.stringify({ recovered, gridOrder }));
+}
+
+function loadProgress() {
+  const data = localStorage.getItem("level2Progress");
+  if (data) {
+    const parsed = JSON.parse(data);
+    recovered = parsed.recovered;
+    createGrid(parsed.gridOrder);
+    recovered.forEach((r, i) => { if (r) grid.children[i].classList.add("recovered"); });
+    if (recovered.every(r => r)) enablePuzzle();
+  } else {
+    createGrid();
+  }
+}
+
+function createGrid(order = null) {
+  grid.innerHTML = "";
+  (order || Array.from({ length: 9 }, (_, i) => `Encryption${i + 1}`)).forEach((imgName, i) => {
+    const cell = document.createElement("div");
+    cell.className = "cell";
+    cell.dataset.index = i;
+    const img = document.createElement("img");
+    img.src = `assets/images/${imgName}-recovered.jpg`;
+    img.draggable = false;
+    cell.appendChild(img);
+    cell.onclick = () => openPopup(i);
+    grid.appendChild(cell);
+  });
+}
+
+function openPopup(i) {
+  if (recovered[i]) return;
+  currentSlot = i;
+  playSound(buttonSound);
+  popup.style.display = "flex";
+}
+
+function closePopup() {
+  popup.style.display = "none";
+}
+
+function startRecovery() {
+  closePopup();
+  playSound(buttonSound);
+  loadingOverlay.style.display = "flex";
+  loadingBar.style.width = "0%";
+  loadingBar.style.transition = "none";
+  let progress = 0;
+  animateLoadingText();
+  const interval = setInterval(() => {
+    progress += 1;
+    loadingBar.style.width = progress + "%";
+    if (progress >= 100) {
+      clearInterval(interval);
+      clearInterval(loadingTextInterval);
+      loadingOverlay.style.display = "none";
+      loadingBar.style.width = "0%";
+      recoverImage(currentSlot);
+    }
+  }, 30);
+}
+
+function recoverImage(i) {
+  grid.children[i].classList.add("recovered");
+  recovered[i] = true;
+  saveProgress();
+  if (recovered.every(r => r)) enablePuzzle();
+}
+
+function enablePuzzle() {
+  for (let cell of grid.children) {
+    const img = cell.querySelector("img");
+    img.draggable = true;
+    img.ondragstart = dragStart;
+    img.ondragover = e => e.preventDefault();
+    img.ondrop = drop;
+  }
+  confirmBtn.style.display = "inline-block";
+}
+
+function dragStart(e) {
+  dragSrc = e.target;
+}
+
+function drop(e) {
+  if (!dragSrc || dragSrc === e.target) return;
+  [dragSrc.src, e.target.src] = [e.target.src, dragSrc.src];
+  dragSrc = null;
+  checkIfSolvedVisually();
+  saveProgress();
+}
+
+function checkAnswer() {
+  const current = Array.from(grid.children).map(c => c.querySelector("img").src.match(/Encryption\d+/)[0]);
+  if (JSON.stringify(current) === JSON.stringify(correctOrder)) {
+    playSound(buttonSound);
+    grid.classList.add("unified");
+    loadingOverlay.style.display = "flex";
+    loadingBar.style.transition = "width 2s linear";
+    loadingBar.style.width = "100%";
+    localStorage.removeItem("level2Progress");
+    setTimeout(() => { window.location.href = "level-3.html"; }, 2000);
+  } else {
+    playSound(alertSound);
+    alert("Salah! Memori terenkripsi kembali.");
+    localStorage.removeItem("level2Progress");
+    location.reload();
+  }
+}
+
+function animateLoadingText() {
+  const text = document.getElementById("loadingText");
+  loadingTextInterval = setInterval(() => {
+    dotCount = (dotCount + 1) % 4;
+    text.textContent = "Memulihkan data" + ".".repeat(dotCount);
+  }, 500);
+}
+
+function checkIfSolvedVisually() {
+  const current = Array.from(grid.children).map(c => c.querySelector("img").src.match(/Encryption\d+/)[0]);
+  grid.classList.toggle("unified", JSON.stringify(current) === JSON.stringify(correctOrder));
+}
+
+function tampilkanInfo() {
+  const teks = "Klik setiap fragmen untuk memulihkan datanya.\nSetelah semua fragmen berhasil direcovery, kamu bisa menekan lama dan menyeret fragmen untuk menyusun ulang bagian-bagian gambar.\n\nSaat susunan sudah sesuai dengan aslinya, tekan tombol \"Konfirmasi\".\nJika benar, kamu akan melanjutkan ke level berikutnya. Jika salah, sistem akan mengacak ulang dan kamu harus mencoba lagi.";
+  infoText.innerHTML = "";
+  infoPopup.style.display = "flex";
+  let i = 0;
+  function ketik() {
+    if (i < teks.length) {
+      typeSound.currentTime = 0;
+      typeSound.play();
+      infoText.innerHTML += teks.charAt(i) === "\n" ? "<br>" : teks.charAt(i);
+      i++;
+      setTimeout(ketik, 30);
+    }
+  }
+  ketik();
+}
+
+function tutupInfo() {
+  infoPopup.style.display = "none";
+}
+
+loadProgress();
+</script></body>
+</html>

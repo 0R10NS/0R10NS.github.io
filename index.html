@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Proyek Orion: Lobi Utama</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #00ff00;
+      font-family: 'Courier new', monospace;
+      padding: 20px;
+      margin: 0;
+      overflow-x: hidden;
+    }
+    .terminal {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 30px;
+      border: 2px solid #00ff00;
+      background-color: #001100;
+      box-shadow: 0 0 15px rgba(0,255,0,0.5);
+      border-radius: 10px;
+      position: relative;
+    }
+    h1 {
+      text-align: center;
+      text-shadow: 0 0 5px #00ff00;
+    }
+    .button, .input-button, .info-button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #002200;
+      color: #00ff00;
+      border: 1px solid #00ff00;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s, transform 0.2s;
+    }
+    .button:hover, .input-button:hover, .info-button:hover {
+      background: #004400;
+    }
+    .button:active, .input-button:active, .info-button:active {
+      transform: scale(0.97);
+    }
+    .info-button.ready {
+      background-color: #444400;
+      color: yellow;
+      border-color: yellow;
+    }
+    .input-code {
+      width: 100%;
+      margin-top: 20px;
+      padding: 10px;
+      font-family: 'Courier new', monospace;
+      font-size: 16px;
+      border: 1px solid #00ff00;
+      background-color: #000;
+      color: #00ff00;
+    }
+    .footer {
+      margin-top: 50px;
+      text-align: center;
+      font-size: 12px;
+      color: #007700;
+    }
+    .blink-cursor::after {
+      content: "_";
+      animation: blink 1s steps(2, start) infinite;
+    }
+    @keyframes blink {
+      to { visibility: hidden; }
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: url('assets/images/noise.gif');
+      opacity: 0.05;
+      pointer-events: none;
+      z-index: 1000;
+    }
+    #popupInfo {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.95);
+      color: #00ff00;
+      font-family: 'Courier new', monospace;
+      padding: 40px 20px;
+      z-index: 9999;
+      overflow-y: auto;
+    }
+    #popupContent {
+      max-width: 600px;
+      margin: auto;
+    }
+    #popupInfo button {
+      margin-top: 30px;
+    }
+    #loadingOverlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(0, 0, 0, 0.95);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+    .loading-bar {
+      width: 80%;
+      height: 20px;
+      background-color: #003300;
+      border: 1px solid #00ff00;
+      display: flex;
+    }
+    .loading-fill {
+      height: 100%;
+      width: 0%;
+      background-color: #00ff00;
+      animation: loading 3s linear forwards;
+    }
+    @keyframes loading {
+      to { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="terminal">
+    <h1>PROYEK ORION</h1>
+    <div id="introText" class="blink-cursor"></div>
+    <button id="infoBtn" class="info-button" onclick="tampilkanIntro()">(?)</button>
+    <button class="button" onclick="mulai()">Mulai</button>
+    <textarea id="kodeInput" class="input-code" rows="2" placeholder="Tulis kode level untuk lompati level..."></textarea>
+    <button class="input-button" onclick="masuk()">Akses Kode Level</button>
+    <button class="button" onclick="bukaManager()">Progress Storage Manager</button>
+  </div>
+  <div class="footer">
+    &copy; 2026 Orion Initiative <br />==== SYSTEM ACTIVE ====
+  </div>
+
+  <div id="popupInfo">
+    <div id="popupContent">
+      <h2>INFORMASI</h2>
+      <p id="popupText"></p>
+      <button onclick="tutupPopup()" class="input-button">Tutup</button>
+    </div>
+  </div>
+
+  <div id="loadingOverlay">
+    <div class="loading-bar">
+      <div class="loading-fill"></div>
+    </div>
+  </div>
+
+  <audio id="clickSound" src="assets/audio/button.mp3" preload="auto"></audio>
+  <audio id="typeSound" src="assets/audio/type.mp3" preload="auto"></audio>
+
+  <script>
+    const clickSound = document.getElementById('clickSound');
+    const typeSound = document.getElementById('typeSound');
+    const introText = document.getElementById("introText");
+    const infoBtn = document.getElementById("infoBtn");
+    const popupInfo = document.getElementById("popupInfo");
+    const popupText = document.getElementById("popupText");
+    const loadingOverlay = document.getElementById("loadingOverlay");
+
+    function playSound() {
+      clickSound.currentTime = 0;
+      clickSound.play();
+    }
+
+    function mulai() {
+      playSound();
+      showLoading(() => {
+        window.location.href = "level-1.html";
+      });
+    }
+
+    function masuk() {
+      playSound();
+      const kode = document.getElementById("kodeInput").value.trim().toUpperCase();
+      const kodeMap = {
+        "END1-TRUE": "ending-2.html",
+        "134D-N": "ending-1.html",
+        "001": "level-1.html",
+        "7271V2": "level-2.html",
+        "V1CT1M": "level-3.html",
+        "LVL4A1": "level-4a1.html",
+        "LVL4A2": "level-4a2.html",
+        "RPG5A1": "level-5a1.html",
+        "FSS5A2": "level-5a2.html",
+        "57D4T4": "level-7a.html",
+        "4R51P": "level-6a.html",
+        "XOXO": "XOXO.html",
+        "SNAKE": "ular.html"
+      };
+      if (kodeMap[kode]) {
+        // simpan ke history jika belum ada
+        let history = JSON.parse(localStorage.getItem('Kode_Level_History')) || [];
+        if (!history.includes(kode)) {
+          history.push(kode);
+          localStorage.setItem('Kode_Level_History', JSON.stringify(history));
+        }
+        showLoading(() => {
+          window.location.href = kodeMap[kode];
+        });
+      } else {
+        alert("Kode tidak dikenal.");
+      }
+    }
+
+    function bukaManager() {
+      playSound();
+      showLoading(() => {
+        window.location.href = "manager.html";
+      });
+    }
+
+    function tampilkanIntro() {
+      const teks = "Selamat datang, Agen.\nMasuki kedalaman proyek rahasia, pecahkan kebenaran yang dikubur. \nTekan (?) untuk info lebih lanjut.";
+      introText.innerHTML = "";
+      let i = 0;
+      function ketik() {
+        if (i < teks.length) {
+          typeSound.currentTime = 0;
+          typeSound.play();
+          introText.innerHTML += teks.charAt(i) === "\n" ? "<br>" : teks.charAt(i);
+          i++;
+          setTimeout(ketik, 50);
+        } else {
+          infoBtn.classList.add("ready");
+          infoBtn.onclick = tampilkanPopup;
+        }
+      }
+      ketik();
+    }
+
+    function tampilkanPopup() {
+      const infoText = `Selamat datang di Proyek Orion.
+
+Ini adalah permainan eksplorasi naratif interaktif dengan elemen misteri.
+Kamu berperan sebagai agen rahasia yang harus mengungkap kebenaran tersembunyi dari arsip digital.
+
+Catatan penting:
+- Sediakan catatan fisik/digital untuk mencatat kode level.
+- Setiap level memiliki kode unik yang berfungsi sebagai checkpoint manual.
+- Terdapat 4 cabang ending, salah satunya adalah ending rahasia.
+
+Siapkah kamu menggali kedalaman informasi?`;
+      popupText.innerHTML = "";
+      popupInfo.style.display = "block";
+      let i = 0;
+      function ketikInfo() {
+        if (i < infoText.length) {
+          typeSound.currentTime = 0;
+          typeSound.play();
+          popupText.innerHTML += infoText.charAt(i) === "\n" ? "<br>" : infoText.charAt(i);
+          i++;
+          setTimeout(ketikInfo, 20);
+        }
+      }
+      ketikInfo();
+    }
+
+    function tutupPopup() {
+      popupInfo.style.display = "none";
+    }
+
+    function showLoading(callback) {
+      loadingOverlay.style.display = "flex";
+      setTimeout(() => {
+        callback();
+      }, 3000);
+    }
+
+    // Load input terakhir
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedKode = localStorage.getItem('Kode_Level');
+      if (savedKode) {
+        document.getElementById('kodeInput').value = savedKode;
+      }
+    });
+
+    // Simpan input saat user mengetik
+    document.getElementById('kodeInput').addEventListener('input', (e) => {
+      localStorage.setItem('Kode_Level', e.target.value);
+    });
+  </script>
+</body>
+</html>

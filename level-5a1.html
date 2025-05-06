@@ -1,0 +1,225 @@
+<!DOCTYPE html><html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Level 5a1 - Selena.exe</title>
+  <style>
+    body {
+      background: #000;
+      color: #0f0;
+      font-family: monospace;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+      overflow: hidden;
+    }
+    .popup, .alert-popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #111;
+      color: #0f0;
+      border: 2px solid #0f0;
+      padding: 20px;
+      z-index: 999;
+    }
+    .alert-popup {
+      border-color: red;
+      color: red;
+    }
+    #introScreen {
+      margin-top: 100px;
+    }
+    button {
+      background: #000;
+      color: #0f0;
+      border: 1px solid #0f0;
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+    }
+    #loadingBarContainer {
+      display: none;
+      width: 300px;
+      height: 30px;
+      background: #222;
+      margin: 20px auto;
+      border: 1px solid #0f0;
+    }
+    #loadingBar {
+      height: 100%;
+      width: 0%;
+      background: #0f0;
+    }
+    #messageBox {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 300px;
+      background: #111;
+      border: 2px solid #0f0;
+      color: #0f0;
+      padding: 10px;
+      z-index: 1000;
+      text-align: left;
+    }
+    #messageBox img {
+      width: 100px;
+      float: left;
+      margin-right: 10px;
+    }
+    #messageText {
+      min-height: 80px;
+    }
+    #nextBtn {
+      clear: both;
+      margin-top: 10px;
+    }
+    .glitch-line {
+      position: absolute;
+      width: 100%;
+      height: 1px;
+      background: #0f0;
+      opacity: 0.05;
+      animation: glitchLine 2s infinite linear;
+    }
+    @keyframes glitchLine {
+      0% { top: 0%; }
+      100% { top: 100%; }
+    }
+    #levelCode {
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #0f0;
+      font-size: 14px;
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="glitch-line"></div>
+  <div id="introScreen">
+    <p>Ingin menjalankan file <strong>Selena.exe</strong>?</p>
+    <button onclick="playSound('buttonSound'); handleChoice(true)">Iya</button>
+    <button onclick="playSound('buttonSound'); handleChoice(false)">Tidak</button>
+  </div>  <div id="loadingBarContainer">
+    <div id="loadingBar"></div>
+  </div>  <div id="messageBox">
+    <img id="selenaImage" src="assets/images/selena-1.png" alt="Selena">
+    <div id="messageText"></div>
+    <button id="nextBtn" onclick="playSound('buttonSound'); nextMessage()">Lanjutkan</button>
+  </div>  <div id="attackAlert" class="alert-popup">
+    <p>TERJADI PENYERANGAN!</p>
+    <button onclick="playSound('buttonSound'); redirectToShooter()">OKE</button>
+  </div>  <div id="levelCode">Kode Level: RPG5A1</div><audio id="alertSound" src="assets/audio/alert.mp3" preload="auto"></audio> <audio id="buttonSound" src="assets/audio/button.mp3" preload="auto"></audio> <audio id="typeSound" src="assets/audio/type.mp3" preload="auto"></audio>
+
+  <script>
+    const introScreen = document.getElementById("introScreen");
+    const loadingBarContainer = document.getElementById("loadingBarContainer");
+    const loadingBar = document.getElementById("loadingBar");
+    const messageBox = document.getElementById("messageBox");
+    const messageText = document.getElementById("messageText");
+    const selenaImage = document.getElementById("selenaImage");
+    const attackAlert = document.getElementById("attackAlert");
+    const alertSound = document.getElementById("alertSound");
+    const buttonSound = document.getElementById("buttonSound");
+    const typeSound = document.getElementById("typeSound");
+
+    let messages = [
+      "Kamu berhasil menemukan aku...",
+      "Semua yang terjadi... tidak seperti yang kamu pikirkan...",
+      "Aku butuh bantuanmu untuk menyelamatkanku...",
+      "Fragmen ingatanku telah dicuri, tapi aku masih bisa diselamatkan...",
+      "Tolong jangan pergi... kita bisa keluar dari sistem ini bersama..."
+    ];
+
+    let images = [
+      "selena-1.png",
+      "selena-2.png",
+      "selena-3.png",
+      "selena-4.png",
+      "selena-2.png"
+    ];
+
+    let current = 0;
+    let selectedYes = false;
+    let typeInterval;
+
+    function playSound(id) {
+      const sfx = document.getElementById(id);
+      sfx.currentTime = 0;
+      sfx.play();
+    }
+
+    function handleChoice(isYes) {
+      introScreen.style.display = "none";
+      loadingBarContainer.style.display = "block";
+      selectedYes = isYes;
+      let percent = 0;
+      const interval = setInterval(() => {
+        percent++;
+        loadingBar.style.width = percent + "%";
+        if (percent >= 100) {
+          clearInterval(interval);
+          loadingBarContainer.style.display = "none";
+          if (selectedYes) {
+            showMessages();
+          } else {
+            alertSound.play();
+            alert("File Selena.exe telah rusak!");
+            window.location.href = "level-4a1.html";
+          }
+        }
+      }, 20);
+    }
+
+    function showMessages() {
+      messageBox.style.display = "block";
+      selenaImage.src = `assets/images/${images[current]}`;
+      typeText(messages[current]);
+    }
+
+    function typeText(text) {
+      let i = 0;
+      messageText.textContent = "";
+      clearInterval(typeInterval);
+      typeInterval = setInterval(() => {
+        if (i < text.length) {
+          messageText.textContent += text.charAt(i);
+          if (i % 3 === 0) {
+            typeSound.currentTime = 0;
+            typeSound.play();
+          }
+          i++;
+        } else {
+          clearInterval(typeInterval);
+        }
+      }, 35);
+    }
+
+    function nextMessage() {
+      current++;
+      if (current < messages.length) {
+        selenaImage.src = `assets/images/${images[current]}`;
+        typeText(messages[current]);
+      } else {
+        messageBox.style.display = "none";
+        alertSound.play();
+        attackAlert.style.display = "block";
+      }
+    }
+
+    function redirectToShooter() {
+      window.location.href = "level-5a2.html";
+    }
+
+    window.onload = () => {
+      introScreen.style.display = "block";
+    }
+  </script></body>
+</html>

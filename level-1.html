@@ -1,0 +1,69 @@
+<!DOCTYPE html><html lang="id"><head>
+<meta charset="UTF-8">
+<title>Level 1 - File Explorer</title>
+<style>
+body {background:#000;color:#0f0;font-family:monospace;text-align:center;padding:20px}
+.grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:15px;justify-items:center;margin-top:30px}
+.item {background:#001100;border:1px solid #0f0;width:100px;height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative}
+.item img {width:40px;height:40px}
+.item span {margin-top:5px;font-size:10px;word-break:break-word;text-align:center}
+#popupMenu {display:none;position:absolute;background:#fff;color:#000;border:1px solid #333;z-index:1000}
+#popupMenu button {display:block;width:100%;background:#fff;color:#000;border:none;padding:6px 10px;text-align:left;cursor:pointer}
+#popupMenu button:hover {background:#eee}
+#popupMenu button.disabled {color:#888;cursor:not-allowed}
+#popupContent {display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#111;color:#0f0;border:1px solid #0f0;padding:20px;width:700px;max-width:95vw;max-height:90vh;overflow-y:auto;z-index:9999}
+.footer {margin-top:40px;font-size:14px;color:#070}
+.thumb-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:15px;justify-items:center;margin:20px 0}
+.thumb-button {display:flex;flex-direction:column;align-items:center;background:#020;border:1px solid #0f0;color:#0f0;cursor:pointer;font-size:14px;padding:10px;width:120px}
+.thumb-button img {width:100px;height:100px;margin-bottom:5px}
+.thumb-button:hover {background:#040}
+.popup-image {width:320px;height:320px;object-fit:contain;border:1px solid #0f0;margin-bottom:15px}
+#passwordInput {background:#000;color:#0f0;border:1px solid #0f0;padding:5px;font-family:monospace}
+</style>
+</head>
+<body>
+<h1>File Explorer</h1>
+<button onclick="showHelp('help')" style="background:#001100;border:1px solid #00ff00;color:#00ff00;font-family:monospace;padding:5px 15px;cursor:pointer;margin-bottom:15px"><b>[ Help ]</b></button>
+<div class="grid" id="fileGrid"></div>
+<div id="popupMenu"></div>
+<div id="popupContent"></div>
+<audio id="buttonSound" src="assets/audio/button.mp3" preload="auto"></audio>
+<audio id="typeSound" src="assets/audio/type.mp3" preload="auto"></audio>
+<div id="loadingScreen" style="display:none">
+  <div style="color:#0f0;font-family:monospace;margin-bottom:10px">Memproses akses...</div>
+  <div id="loadingBarContainer" style="width:80%;margin:0 auto;border:1px solid #0f0;height:20px;background:#001100">
+    <div id="loadingBar" style="width:0%;height:100%;background:#0f0"></div>
+  </div>
+</div>
+<script>
+function saveProgress(){localStorage.setItem("filesProgress-level-1",JSON.stringify(files))}
+function loadProgress(){const s=localStorage.getItem("filesProgress-level-1");return s?JSON.parse(s):null}
+let files=loadProgress()||[
+{name:"Recovered_Logs",type:"folder",images:[1,2,3]},
+{name:"Archive_X",type:"folder",images:[4,5,6]},
+{name:"AI_dump",type:"folder",images:[7,8,9,10,11]},
+{name:"dump_backup",type:"folder",images:[12,13,14,15,16]},
+{name:"Access.exe",type:"file"}
+];
+const grid=document.getElementById("fileGrid"),popupMenu=document.getElementById("popupMenu"),popupContent=document.getElementById("popupContent");
+let currentItem=null;
+function renderFiles(){grid.innerHTML="";files.forEach(item=>{const div=document.createElement("div");div.className="item";div.dataset.name=item.name;div.dataset.type=item.type;div.dataset.index=files.indexOf(item);div.innerHTML=`<img src="assets/images/${item.type==='folder'?'folder.png':'file.png'}"><span>${item.name}</span>`;div.ondblclick=e=>{e.preventDefault();currentItem=files[parseInt(div.dataset.index)];showMenu(e.pageX,e.pageY)};grid.appendChild(div)})}
+renderFiles();
+function playSound(){const s=document.getElementById("buttonSound");s.currentTime=0;s.play()}
+function showMenu(x,y){playSound();popupMenu.style.left=`${x}px`;popupMenu.style.top=`${y}px`;popupMenu.style.display="block";popupMenu.innerHTML=`<button onclick="openItem()">Open</button><button onclick="renameItem()">Rename</button><button onclick="alert('Copy Berhasil!.')">Copy</button><button onclick="alert('Folder sudah ada!.')">Paste</button><button onclick="confirmDelete()">Delete</button><button onclick="alert('Tidak dapat mengunggah folder.')">Upload</button><button onclick="closeMenu()">Close</button>`}
+function closeMenu(){popupMenu.style.display="none"}
+function renameItem(){if(currentItem.name==="Access.exe"){alert("File ini tidak bisa diganti namanya!");closeMenu();return}const n=prompt("Masukkan nama baru:",currentItem.name);if(n&&n.trim()!==""){currentItem.name=n.trim();saveProgress();renderFiles()}else alert("Nama tidak boleh kosong!");closeMenu()}
+function confirmDelete(){if(currentItem.name==="Access.exe"){alert("File ini tidak bisa dihapus!");closeMenu();return}const pass=prompt("Masukkan kata sandi untuk menghapus folder:");if(pass==="7271V2"){const i=files.indexOf(currentItem);if(i!==-1){files.splice(i,1);saveProgress();renderFiles();alert("Folder berhasil dihapus.")}}else alert("Kata sandi salah!");closeMenu()}
+function openItem(){closeMenu();playSound();if(currentItem.type==="folder"){let html=`<h2>${currentItem.name}</h2><div class='thumb-grid'>`;currentItem.images.forEach(num=>{html+=`<div class='thumb-button' onclick='openImage(${num})'><img src='assets/images/file.png'><span>${num}.jpg</span></div>`});html+=`</div><button onclick='closePopup()'>Tutup</button>`;popupContent.innerHTML=html;popupContent.style.display="block"}else if(currentItem.name==="Access.exe"){popupContent.innerHTML=`<h2>Access.exe</h2><p>Masukkan kata sandi untuk melanjutkan:</p><input type='text' id='passwordInput' placeholder='Kode akses...'><button onclick='checkPassword()'>Akses</button><button onclick='closePopup()'>Tutup</button>`;popupContent.style.display="block"}}
+function openImage(num){playSound();popupContent.innerHTML=`<h2>${num}.jpg</h2><img src='assets/images/${num}.jpg' class='popup-image'><button onclick='closePopup()'>Tutup</button>`;popupContent.style.display="block"}
+function closePopup(){popupContent.style.display="none"}
+function checkPassword(){const val=document.getElementById("passwordInput").value.trim();if(val==="7271V2"){popupContent.style.display="none";showLoadingBar()}else alert("Kode salah!")}
+function showLoadingBar(){const l=document.getElementById("loadingScreen"),b=document.getElementById("loadingBar");l.style.display="block";b.style.width="0%";let p=0;const intv=setInterval(()=>{p+=1;b.style.width=p+"%";if(p>=100){clearInterval(intv);window.location.href="level-2.html"}},30)}
+window.addEventListener("click",e=>{if(!popupMenu.contains(e.target))closeMenu()});
+function showHelp(mode="intro"){if(mode==="intro"){popupContent.innerHTML=`<h2>Selamat datang, Agen.</h2><p>File sistem telah dipulihkan sebagian. Tugas kamu adalah menelusuri isi tiap folder.</p><p><b>Petunjuk:</b> Klik dua kali (double-click) pada file atau folder untuk membuka menu tindakan.</p><p>Temukan akses yang benar dan gunakan <code>Access.exe</code> untuk melanjutkan ke sistem berikutnya.</p><button onclick='closePopup()'>Siap!</button>`;popupContent.style.display="block"}else{popupContent.innerHTML=`<h2 id="helpTitle"></h2><p id="helpLine1"></p><p id="helpLine2"></p><p id="helpLine3"></p><button onclick='closePopup()'>Tutup</button>`;popupContent.style.display="block";const t=document.getElementById("typeSound");const lines=[{id:"helpTitle",text:"Panduan Singkat"},{id:"helpLine1",text:"Double-click pada file atau folder untuk membuka menu tindakan."},{id:"helpLine2",text:"Gunakan menu tersebut untuk membuka folder, melihat gambar, atau mengakses Access.exe."},{id:"helpLine3",text:"Temukan petunjuk tersembunyi dalam gambar atau nama file untuk menemukan kode akses."}];let li=0,ci=0;function typeLine(){if(li>=lines.length)return;const l=lines[li],el=document.getElementById(l.id);if(ci<l.text.length){el.innerHTML+=l.text.charAt(ci);if(l.text.charAt(ci)!==" "){t.currentTime=0;t.play()}ci++;setTimeout(typeLine,50)}else{li++;ci=0;setTimeout(typeLine,200)}}typeLine()}}
+window.onload=()=>{showHelp("intro")};
+document.addEventListener("click",e=>{if(e.target.tagName==="BUTTON"&&!e.target.classList.contains("no-sound")){const s=document.getElementById("buttonSound");s.currentTime=0;s.play()}});
+</script>
+<div class="footer">Kode Level: 001</div>
+</body>
+</html>

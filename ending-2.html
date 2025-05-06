@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>True Ending</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      background-color: #000;
+      color: #00ff00;
+      font-family: 'Space Mono', monospace;
+      margin: 0;
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .terminal {
+      border: 1px solid #00ff00;
+      padding: 30px;
+      position: relative;
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      height: 80vh;
+    }
+
+    .terminal::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 25px;
+      background: #003300;
+      border-bottom: 1px solid #00ff00;
+    }
+
+    .terminal::after {
+      content: "ORION_TERMINAL v3.7.2";
+      position: absolute;
+      top: 5px;
+      left: 10px;
+      font-size: 12px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 28px;
+      margin-top: 30px;
+      text-shadow: 0 0 5px #00ff00;
+      opacity: 0;
+    }
+
+    .blinking-cursor::after {
+      content: "|";
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    p {
+      margin: 20px 0;
+      opacity: 0;
+    }
+
+    .highlight {
+      color: #ffffff;
+      font-weight: bold;
+      text-shadow: 0 0 5px #00ff00;
+    }
+
+    .code-display {
+      background: #002200;
+      padding: 15px;
+      border-left: 3px solid #00ff00;
+      font-size: 20px;
+      text-align: center;
+      margin: 30px 0;
+      opacity: 0;
+      transition: all 0.3s;
+    }
+
+    .code-display:hover {
+      background: #003300;
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.8);
+    }
+
+    .back-button {
+      display: block;
+      width: 200px;
+      margin: 30px auto;
+      padding: 12px;
+      background: #003300;
+      color: #00ff00;
+      text-align: center;
+      text-decoration: none;
+      border: 1px solid #00ff00;
+      transition: all 0.3s;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .back-button:hover {
+      background: #004400;
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.7);
+      transform: translateY(-3px);
+    }
+
+    .popup-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .popup {
+      background-color: #001100;
+      border: 2px solid #00ff00;
+      padding: 20px;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.8);
+      position: relative;
+    }
+
+    .popup .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      background: #002200;
+      border: 1px solid #00ff00;
+      color: #00ff00;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+
+    .popup .close-btn:hover {
+      background: #003300;
+    }
+
+    .narrative-container::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .narrative-container::-webkit-scrollbar-track {
+      background: #001100;
+    }
+
+    .narrative-container::-webkit-scrollbar-thumb {
+      background-color: #00aa00;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="terminal">
+      <h1 id="main-title">AKSES DIBERIKAN: PROYEK ORION</h1>
+
+      <button id="openPopup" style="margin:auto; padding:10px; background:#002200; color:#00ff00; border:1px solid #00ff00; cursor:pointer;">Buka Data</button>
+
+      <div class="code-display">LEVEL CODE: END1-TRUE</div>
+      <a href="index.html" class="back-button" id="back-button">Kembali ke Lobi</a>
+
+      <div class="popup-overlay" id="popupOverlay">
+        <div class="popup">
+          <button class="close-btn" id="closePopup">X</button>
+          <div class="narrative-container" id="narrative">
+            <div id="content">
+              <p>Ternyata, kasus ini bukan sekadar pembunuhan biasa.</p>
+              <p>Semua bukti yang kamu temukan—catatan medis palsu, kamera pengawas yang dimanipulasi, dan pesan tersembunyi dalam jurnal korban—mengarah pada satu nama: <span class="highlight">Dr. Alven Ried</span>, seorang ilmuwan pemerintah yang telah menjalankan eksperimen rahasia selama lebih dari 12 tahun.</p>
+              <p>Korban terakhir, yang terlihat seperti hanya seorang jurnalis, ternyata adalah informan internal yang hendak membocorkan proyek bernama <span class="highlight">Orion Protocol</span>, yaitu program manipulasi memori massal menggunakan gelombang frekuensi rendah.</p>
+              <p>Tujuannya? Mengontrol opini publik, menghapus jejak kesalahan masa lalu, dan menciptakan ulang sejarah.</p>
+              <p>Berkat penyelidikanmu, kamu berhasil memulihkan data asli dari perangkat otak korban, membuka kebenaran lewat rekaman ingatannya yang dipulihkan.</p>
+              <p>Dunia kini tahu apa yang terjadi. Pemerintah terpaksa mengakui keberadaan proyek itu, dan Dr. Ried ditangkap dalam konferensi pers yang disiarkan global.</p>
+              <p class="highlight">Kebenaran telah diselamatkan.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <audio id="button-sound" src="assets/audio/button.mp3" preload="auto"></audio>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const title = document.getElementById('main-title');
+    const narrativeContainer = document.getElementById('narrative');
+    const elements = [...document.querySelectorAll('#content p')];
+    const codeDisplay = document.querySelector('.code-display');
+    const backButton = document.getElementById('back-button');
+    const buttonSound = document.getElementById('button-sound');
+    const openPopup = document.getElementById('openPopup');
+    const popupOverlay = document.getElementById('popupOverlay');
+    const closePopup = document.getElementById('closePopup');
+
+    narrativeContainer.style.opacity = '0';
+
+    setTimeout(() => {
+      animateElement(title, 0, () => {
+        animateElement(narrativeContainer, 0, () => {
+          animateElementsSequentially(elements, 0, () => {
+            animateElement(codeDisplay, 0, () => {
+              animateElement(backButton, 0);
+            });
+          });
+        });
+      });
+    }, 1000);
+
+    function animateElement(element, charIndex, callback) {
+      let opacity = parseFloat(window.getComputedStyle(element).opacity);
+      opacity += 0.05;
+      element.style.opacity = opacity;
+      if (opacity < 1) {
+        setTimeout(() => animateElement(element, charIndex, callback), 50);
+      } else {
+        if (callback) callback();
+      }
+    }
+
+    function animateElementsSequentially(elements, index, finalCallback) {
+      if (index >= elements.length) {
+        if (finalCallback) finalCallback();
+        return;
+      }
+      animateElement(elements[index], 0, () => {
+        setTimeout(() => {
+          animateElementsSequentially(elements, index + 1, finalCallback);
+        }, 300);
+      });
+    }
+
+    openPopup.addEventListener('click', function () {
+      buttonSound.currentTime = 0;
+      buttonSound.play();
+      popupOverlay.style.display = 'flex';
+    });
+
+    closePopup.addEventListener('click', function () {
+      buttonSound.currentTime = 0;
+      buttonSound.play();
+      popupOverlay.style.display = 'none';
+    });
+
+    backButton.addEventListener('click', function (e) {
+      e.preventDefault();
+      buttonSound.currentTime = 0;
+      buttonSound.play();
+      setTimeout(() => {
+        window.location.href = backButton.href;
+      }, 300); // Delay agar suara sempat terdengar
+    });
+  });
+</script>
+</body>
+</html>
