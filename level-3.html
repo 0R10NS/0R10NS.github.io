@@ -57,7 +57,7 @@ const cell=grid[player.y][player.x];if(["a","b","c"].includes(cell)){inventory[c
 function showPhonePopup() {
   const buktiKeys = ['level-5b-bukti-1', 'level-5b-bukti-2', 'level-5b-bukti-3'];
   const hasAllBukti = buktiKeys.every(key => localStorage.getItem(key));
-  const targetLevel = hasAllBukti ? 'level-6b.html' : 'run.html';
+  const targetLevel = hasAllBukti ? 'berangkas.html' : 'run.html';
 
   window.location.href = targetLevel;
 }

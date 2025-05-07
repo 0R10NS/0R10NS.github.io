@@ -21,25 +21,29 @@
     #scoreDisplay, #highScoreDisplay, #livesDisplay {
       position: absolute;
       padding: 5px 10px;
-      font-size: 9px;
       font-weight: bold;
-      background: url('assets/images/lantai.png');
+      background: url('assets/images/bg1.png');
       background-size: cover;
       border: 1px solid #0f0;
-      color: White;
     }
     #scoreDisplay {
       top: 10px;
       left: 10px;
+      font-size: 9px;
+      color: White;
     }
     #highScoreDisplay {
-      top: 10px;
+      top: 35px;
       left: 50%;
       transform: translateX(-50%);
+      font-size: 11px;
+      color: White;
     }
     #livesDisplay {
       top: 10px;
       right: 10px;
+      font-size: 12px;
+      color: Red;
     }
     #controls {
       margin-top: 20px;
@@ -85,6 +89,17 @@
       padding: 8px 20px;
       cursor: pointer;
     }
+    .footer {
+      margin-top: 0px;
+      text-align: center;
+      font-size: 12px;
+      background: url('assets/images/bg1.png');
+      background-size: cover;
+      background-color: rgba(0, 0, 0, 0.6);
+      background-blend-mode: multiply;
+      color: #ffffff;
+      border: 1px solid #000;
+    }
   </style>
 </head>
 <body>
@@ -102,7 +117,7 @@
     <button onclick="window.location.href='level-4b1.html'">Keluar</button>
   </div>  <div id="scoreDisplay">Score: 0</div>
   <div id="highScoreDisplay">High Score: 0</div>
-  <div id="livesDisplay">O O O</div>
+  <div id="livesDisplay">♥ ♥ ♥</div>
   <canvas id="gameCanvas" width="200" height="360"></canvas>
   <div id="controls">
     <div>
@@ -115,6 +130,7 @@
       <button onclick="shoot()">A</button>
       <button onclick="moveRight()">&gt;</button>
     </div>
+    <div class="footer">Kode Level: KODOK</div>
   </div><audio id="buttonSound" src="assets/audio/button.mp3" preload="auto"></audio> <audio id="alertSound" src="assets/audio/alert.mp3" preload="auto"></audio> <audio id="typeSound" src="assets/audio/type.mp3" preload="auto"></audio> <audio id="getSound" src="assets/audio/get.mp3" preload="auto"></audio>
 
   <script>
@@ -176,7 +192,7 @@
     }
 
     function updateLives() {
-      livesDisplay.textContent = "O ".repeat(lives).trim();
+      livesDisplay.textContent = "♥ ".repeat(lives).trim();
     }
 
     function updateHighScore() {

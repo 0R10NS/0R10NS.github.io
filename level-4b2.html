@@ -13,6 +13,12 @@ h1 {text-shadow:0 0 5px #0f0,0 0 10px #0ff;margin:0;font-size:16px}
 h1 img {width:32px;height:32px;vertical-align:middle}
 #healthBar {position:absolute;top:70px;right:10px;width:100px;height:10px;background:#400040;border:2px solid #0f0}
 #healthFill {height:100%;width:100%;background:linear-gradient(to right,#0f0,#0f0);transition:width .3s ease}
+.footer {
+      margin-top: 0px;
+      text-align: center;
+      font-size: 13px;
+      color: #ff0202;
+    }
 #loadingContainer {width:300px;height:20px;border:2px solid #0f0;background:#111;margin:10px auto;position:relative}
 #loadingBar {height:100%;width:0%;background:linear-gradient(to right,#00f,#0f0);transition:width .2s ease}
 #loadingText {font-family:'Courier New',monospace;margin-top:5px;color:#0f0}
@@ -22,7 +28,8 @@ body::after {content:"";position:absolute;top:0;left:0;width:100%;height:100%;ba
 <body>
 <h1><img src="assets/images/tong.png" alt="Bin Icon">Recycle Bin</h1>
 <div id="healthBar"><div id="healthFill"></div></div>
-<canvas id="gameCanvas" width="300" height="450"></canvas>
+<canvas id="gameCanvas" width="300" height="400"></canvas>
+<div class="footer">Kode Level: DS4B2</div>
 <div id="loadingContainer"><div id="loadingBar"></div></div>
 <div id="loadingText">Loading... 0%</div>
 <div class="controls">

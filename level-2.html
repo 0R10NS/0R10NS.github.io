@@ -45,7 +45,7 @@ body { background: #000; color: #0f0; font-family: 'Space Mono', monospace; text
       <div class="loading-bar-inner" id="loadingBar"></div>
     </div>
   </div>
-</div><div class="footer">Kode Level: 7271V2</div><audio id="buttonSound" src="/assets/audio/button.mp3" preload="auto"></audio> <audio id="alertSound" src="/assets/audio/alert.mp3" preload="auto"></audio> <audio id="typeSound" src="/assets/audio/type.mp3" preload="auto"></audio>
+</div><div class="footer">Kode Level: 7271V2</div><audio id="buttonSound" src="assets/audio/button.mp3" preload="auto"></audio> <audio id="alertSound" src="assets/audio/alert.mp3" preload="auto"></audio> <audio id="typeSound" src="assets/audio/type.mp3" preload="auto"></audio>
 
 <script>
 const grid = document.getElementById("grid"),
@@ -101,7 +101,7 @@ function createGrid(order = null) {
     cell.className = "cell";
     cell.dataset.index = i;
     const img = document.createElement("img");
-    img.src = `/assets/images/${imgName}-recovered.jpg`;
+    img.src = `assets/images/${imgName}-recovered.jpg`;
     img.draggable = false;
     cell.appendChild(img);
     cell.onclick = () => openPopup(i);

@@ -1,133 +1,228 @@
 <!DOCTYPE html><html lang="en">
 <head>
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    background: radial-gradient(ellipse at center, #000000 0%, #1a1a1a 100%);
+    color: #ff00cc;
+    font-family: 'Courier New', monospace;
+    overflow: hidden;
+  }
+
+  #background {
+    position: relative;
+    height: 100vh;
+    width: 100%;
+    background: repeating-linear-gradient(
+      0deg,
+      #111 0px,
+      #111 2px,
+      #000 2px,
+      #000 4px
+    );
+    animation: glitchBackground 1s infinite;
+  }
+
+  header {
+    text-align: center;
+    color: #ff004d;
+    padding: 20px;
+    font-size: 36px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    text-shadow:
+      0 0 5px #ff004d,
+      2px 2px #00ffff,
+      -2px -2px #ff00ff;
+    position: relative;
+    z-index: 10;
+  }
+
+  button {
+    background-color: #000;
+    color: #00ffff;
+    border: 2px solid #ff00ff;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-family: 'Courier New', monospace;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 0 10px #00ffff;
+    transition: all 0.3s ease;
+  }
+
+  button:hover {
+    background-color: #ff00ff;
+    color: #000;
+    box-shadow: 0 0 20px #ff00ff;
+  }
+
+  @keyframes glitchBackground {
+    0% { background-position: 0 0; }
+    20% { background-position: 5px 2px; }
+    40% { background-position: -5px -2px; }
+    60% { background-position: 5px -2px; }
+    80% { background-position: -5px 2px; }
+    100% { background-position: 0 0; }
+  }
+</style>
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Level 6b Memory Match</title>
   <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { width: 100%; height: 100%; overflow: hidden; position: relative; }
-  body { font-family: sans-serif; }
-
-  #background {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    z-index: 0;
-    animation: bgCycle 0.3s infinite;
-    background-size: cover;
-  }
-  @keyframes bgCycle {
-    0% { background-image: url('assets/images/bg1.png'); }
-    33% { background-image: url('assets/images/bg2.png'); }
-    66% { background-image: url('assets/images/bg3.png'); }
-    100% { background-image: url('assets/images/bg1.png'); }
-  }
-
-  @keyframes shake {
-    0% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    50% { transform: translateX(5px); }
-    75% { transform: translateX(-5px); }
-    100% { transform: translateX(0); }
-  }
-
-  #map {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 300px;
-    height: 400px;
-    display: grid;
-    grid-template-columns: repeat(5, 60px);
-    grid-template-rows: repeat(5, 80px);
-    gap: 0;
-    z-index: 1;
-  }
-
-  .tile {
-    width: 60px;
-    height: 80px;
-    background-image: url('assets/images/grid-tile.png');
-    background-size: cover;
-    position: relative;
-  }
-
-  .drawer {
-    position: absolute;
-    width: 10px;
-    height: 80px;
-    background-image: url('assets/images/file-slot.png');
-    background-size: cover;
-    z-index: 9;
-    transition: width 0.5s;
-  }
-
-  .drawer.shrunk {
-    width: 60px;
-  }
-
-  .file {
-    position: absolute;
-    width: 60px;
-    height: 60px;
-    top: 20px;
-    cursor: pointer;
-    background-size: cover;
-    transition: all 0.3s ease;
-  }
-
-  .file.selected {
-    outline: 2px solid yellow;
-  }
-
-  .file.matching {
-    animation: blinkBorder 0.3s infinite alternate, glitch 0.3s infinite alternate;
-  }
-
-  @keyframes blinkBorder {
-    from { border: 2px solid blue; }
-    to { border: 2px solid red; }
-  }
-
-  @keyframes glitch {
-    0% { transform: skew(0); }
-    20% { transform: skew(1deg, -1deg); }
-    40% { transform: skew(-1deg, 1deg); }
-    60% { transform: skew(2deg, 0); }
-    80% { transform: skew(0, -2deg); }
-    100% { transform: skew(0); }
-  }
-
-  #narrative-popup {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.85);
-    color: white;
-    padding: 15px;
-    border-radius: 8px;
-    width: 300px;
-    height: 400px;
-    max-width: 90%;
-    font-size: 14px;
-    display: none;
-    z-index: 99;
-  }
-
-  #narrative-popup button {
-    margin-top: 10px;
-    background: #0ff;
-    color: black;
-    padding: 5px 10px;
-    border: none;
-    cursor: pointer;
-  }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #0a0a0a;
+}
+#background {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  animation: bgCycle 1s infinite steps(1);
+  background-size: cover;
+  filter: brightness(0.6) contrast(1.2);
+}
+@keyframes bgCycle {
+  0% { background-image: url('assets/images/bg1.png'); }
+  33% { background-image: url('assets/images/bg2.png'); }
+  66% { background-image: url('assets/images/bg3.png'); }
+  100% { background-image: url('assets/images/bg1.png'); }
+}
+@keyframes shake {
+  0%   { transform: translateX(0); }
+  25%  { transform: translateX(-4px); }
+  50%  { transform: translateX(4px); }
+  75%  { transform: translateX(-4px); }
+  100% { transform: translateX(0); }
+}
+#map {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 300px;
+  height: 400px;
+  display: grid;
+  grid-template-columns: repeat(5, 60px);
+  grid-template-rows: repeat(5, 80px);
+  gap: 0;
+  z-index: 1;
+}
+.tile {
+  width: 60px;
+  height: 80px;
+  background-image: url('assets/images/grid-tile.png');
+  background-size: cover;
+  position: relative;
+  box-shadow: inset 0 0 4px #333;
+  transition: transform 0.2s;
+}
+.tile:hover {
+  transform: scale(1.05);
+}
+.drawer {
+  position: absolute;
+  width: 10px;
+  height: 80px;
+  background-image: url('assets/images/file-slot.png');
+  background-size: cover;
+  z-index: 9;
+  transition: width 0.5s ease, opacity 0.5s;
+  opacity: 0.6;
+}
+.drawer.terbuka {
+  width: 60px;
+  opacity: 1;
+}
+.file {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  top: 20px;
+  cursor: pointer;
+  background-size: cover;
+  border-radius: 6px;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.file:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+}
+.file.selected {
+  outline: 2px solid yellow;
+  box-shadow: 0 0 8px yellow;
+}
+.file.matching {
+  animation: blinkBorder 0.4s infinite alternate, glitch 0.4s infinite alternate;
+}
+@keyframes blinkBorder {
+  from { border: 2px solid #00f; }
+  to { border: 2px solid #f00; }
+}
+@keyframes glitch {
+  0% { transform: skew(0); }
+  20% { transform: skew(1deg, -1deg); }
+  40% { transform: skew(-1deg, 1deg); }
+  60% { transform: skew(2deg, 0); }
+  80% { transform: skew(0, -2deg); }
+  100% { transform: skew(0); }
+}
+#narrative-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.85);
+  color: white;
+  padding: 20px;
+  border-radius: 12px;
+  width: 320px;
+  height: 420px;
+  max-width: 90%;
+  font-size: 14px;
+  display: none;
+  z-index: 99;
+  box-shadow: 0 0 15px rgba(0,255,255,0.5);
+  backdrop-filter: blur(6px);
+  font-family: "Courier New", Courier, monospace;
+}
+#narrative-popup button {
+  margin-top: 10px;
+  background: #0f0;
+  color: black;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  box-shadow: 0 0 5px #0ff;
+  transition: background 0.3s;
+}
+#narrative-popup button:hover {
+  background: #0cc;
+}
 </style>
 </head>
 <body>
-  <div id="background"></div>
+ <div id="background"><header style="text-align:center; color:red; padding:10px; font-size:24px; z-index:10; position:relative;">
+  Laci Memori
+</header>
+<div style="text-align:center; margin:10px; z-index:10; position:relative;">
+  <button onclick="showInfo()" style="padding:5px 10px;">Petunjuk</button>
+</div>
+</div>
   <div id="map"></div>
   <div id="narrative-popup"></div>
   <audio id="sfx-type" src="assets/audio/type.mp3"></audio>
@@ -143,57 +238,91 @@ const audio = {
   alert: document.getElementById('sfx-alert'),
   get: document.getElementById('sfx-get')
 };
-
 const fileTypes = ['A','A','B','B','C','C','D','D','E','E','F','F','X','Y','Z'];
-
-// Fisher-Yates shuffle
 for (let i = fileTypes.length - 1; i > 0; i--) {
   const j = Math.floor(Math.random() * (i + 1));
   [fileTypes[i], fileTypes[j]] = [fileTypes[j], fileTypes[i]];
 }
-
 let openDrawers = [], matchedPairs = 0, matchedKeys = [], isProcessing = false;
-
+const positions = Array.from({ length: 25 }, (_, i) => i);
+for (let i = positions.length - 1; i > 0; i--) {
+  const j = Math.floor(Math.random() * (i + 1));
+  [positions[i], positions[j]] = [positions[j], positions[i]];
+}
+const fileMap = Array(25).fill(null);
+for (let i = 0; i < fileTypes.length; i++) {
+  fileMap[positions[i]] = fileTypes[i];
+}
 for (let i = 0; i < 25; i++) {
   const tile = document.createElement('div');
   tile.classList.add('tile');
-
   const drawer = document.createElement('div');
-  drawer.classList.add('drawer', 'shrunk');
+  drawer.classList.add('drawer', 'terbuka');
   drawer.addEventListener('click', () => toggleDrawer(drawer));
   tile.appendChild(drawer);
-
-  if (i < fileTypes.length) {
-    const type = fileTypes[i];
+  const type = fileMap[i];
+  if (type) {
     const file = createFile(type);
     tile.appendChild(file);
   }
-
   map.appendChild(tile);
 }
-
 function toggleDrawer(drawer) {
   audio.pintu.currentTime = 0;
   audio.pintu.play();
-
-  if (!drawer.classList.contains('shrunk')) {
-    drawer.classList.add('shrunk');
+  if (!drawer.classList.contains('terbuka')) {
+    drawer.classList.add('terbuka');
     openDrawers = openDrawers.filter(d => d !== drawer);
     return;
   }
-
   if (openDrawers.length >= 2) {
-    openDrawers.forEach(d => d.classList.add('shrunk'));
+    openDrawers.forEach(d => d.classList.add('terbuka'));
     openDrawers = [];
   }
-
-  drawer.classList.remove('shrunk');
+  drawer.classList.remove('terbuka');
   openDrawers.push(drawer);
 }
 
 function showNarrative(text, end = false) {
-  popup.innerHTML = `<div>${text}</div>` + (!end ? '<button onclick="popup.style.display=\'none\';checkEnd();">Lanjut</button>' : '<button onclick="location.href=\'level-7b.html\'">Simpan</button>');
+  popup.innerHTML = `
+    <div id="typewriter"></div>
+    <button id="skipBtn">Lewati</button>
+    ${end 
+      ? '<button style="display:none" id="nextBtn" onclick="location.href=\'level-7b.html\'">Simpan</button>'
+      : '<button style="display:none" id="nextBtn" onclick="popup.style.display=\'none\';checkEnd();">Lanjut</button>'
+    }`;
   popup.style.display = 'block';
+
+  const container = document.getElementById('typewriter');
+  const nextBtn = document.getElementById('nextBtn');
+  const skipBtn = document.getElementById('skipBtn');
+  let i = 0;
+  let typing = true;
+
+  function typeNext() {
+    if (!typing) return;
+    if (i < text.length) {
+      container.innerHTML += text[i] === '\n' ? '<br>' : text[i];
+      if (text[i] !== ' ') {
+        audio.type.currentTime = 0;
+        audio.type.play();
+      }
+      i++;
+      setTimeout(typeNext, 30);
+    } else {
+      nextBtn.style.display = 'inline-block';
+      skipBtn.style.display = 'none';
+    }
+  }
+
+  skipBtn.onclick = () => {
+    typing = false;
+    container.innerHTML = text.replace(/\n/g, '<br>');
+    nextBtn.style.display = 'inline-block';
+    skipBtn.style.display = 'none';
+  };
+
+  typeNext();
 }
 
 function checkEnd() {
@@ -208,16 +337,12 @@ function createFile(type) {
   const file = document.createElement('div');
   file.classList.add('file', type);
   file.style.backgroundImage = `url('assets/images/file-${type}.png')`;
-
   file.addEventListener('click', () => {
     if (isProcessing || file.classList.contains('matching')) return;
-
     audio.type.currentTime = 0;
     audio.type.play();
-
     file.classList.toggle('selected');
     const selected = document.querySelectorAll('.file.selected');
-
     if (selected.length === 2) {
       isProcessing = true;
       const [a, b] = selected;
@@ -230,7 +355,6 @@ function createFile(type) {
           audio.get.currentTime = 0;
           audio.get.play();
         }, 600);
-
         setTimeout(() => {
           a.remove();
           b.remove();
@@ -253,20 +377,24 @@ function createFile(type) {
           audio.alert.play();
           a.classList.remove('selected');
           b.classList.remove('selected');
-
           a.style.animation = b.style.animation = 'shake 0.3s';
           setTimeout(() => {
             a.style.animation = b.style.animation = '';
           }, 300);
-
           isProcessing = false;
         }, 300);
       }
     }
   });
-
   return file;
 }
+
+function showInfo() {
+  showNarrative("Pasangkan file yang sama dengan membuka laci-laci dan memilih dua file. Jika cocok, kamu akan mendapatkan pesan tersembunyi. Temukan semua pasangan untuk mengungkap kebenaran.");
+}
 </script>
+<footer style="position:absolute; bottom:0; width:100%; text-align:center; color:white; padding:10px; font-size:12px; background:rgba(0,0,0,0.5); z-index:10;">
+  Kode Level: LACI6B
+</footer>
 </body>
 </html>

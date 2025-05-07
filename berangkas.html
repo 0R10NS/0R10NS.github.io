@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Kombinasi Retro Vault</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    body {
+      background: radial-gradient(circle, #111 0%, #222 100%);
+      color: #0ff;
+      font-family: 'Press Start 2P', monospace;
+      text-align: center;
+      padding-top: 60px;
+      overflow: hidden;
+    }
+
+    .glitch {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(255, 255, 255, 0.02) 0px,
+        rgba(255, 255, 255, 0.02) 1px,
+        transparent 1px,
+        transparent 2px
+      );
+      pointer-events: none;
+      animation: glitchAnim 1s infinite linear;
+      z-index: 5;
+    }
+
+    @keyframes glitchAnim {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-1px); }
+      100% { transform: translateY(0); }
+    }
+
+    .panel {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 40px;
+    }
+
+    .column {
+      margin: 0 5px;
+      text-align: center;
+    }
+
+    .triangle {
+      width: 0;
+      height: 0;
+      border-left: 30px solid transparent;
+      border-right: 30px solid transparent;
+      cursor: pointer;
+    }
+
+    .triangle.up {
+      border-bottom: 35px solid #f0f;
+      margin-bottom: 10px;
+    }
+
+    .triangle.down {
+      border-top: 35px solid #f0f;
+      margin-top: 10px;
+    }
+
+    .triangle:active {
+      transform: scale(0.9);
+    }
+
+    .letter-box {
+      width: 60px;
+      height: 60px;
+      font-size: 36px;
+      background: #000;
+      color: #0ff;
+      border: 3px solid #0ff;
+      box-shadow: 0 0 8px #0ff;
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+    }
+
+    .letter-content {
+      position: absolute;
+      top: 5px;
+      width: 100%;
+      transition: top 0.2s ease-in-out;
+    }
+
+    #enterBtn {
+      background: #0f0;
+      color: #000;
+      padding: 15px 50px;
+      font-size: 18px;
+      border: 3px solid #0ff;
+      cursor: pointer;
+      font-weight: bold;
+      box-shadow: 0 0 10px #0ff, 0 0 20px #0ff;
+    }
+
+    #enterBtn:active {
+      transform: scale(0.95);
+    }
+
+    #loading {
+      display: none;
+      margin-top: 30px;
+    }
+
+    #loadingText {
+      color: #f0f;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+
+    .progress-bar {
+      width: 300px;
+      height: 20px;
+      border: 2px solid #0ff;
+      margin: 0 auto;
+      background: #000;
+      box-shadow: 0 0 8px #0ff;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #0ff, #f0f);
+      animation: glitchBar 1s infinite alternate;
+    }
+
+    @keyframes glitchBar {
+      0% { filter: hue-rotate(0deg); }
+      100% { filter: hue-rotate(30deg); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="glitch"></div>
+
+<div class="panel">
+  <div class="column">
+    <div class="triangle up" onclick="changeLetter(0, 1)"></div>
+    <div class="letter-box"><div class="letter-content" id="letter0">S</div></div>
+    <div class="triangle down" onclick="changeLetter(0, -1)"></div>
+  </div>
+  <div class="column">
+    <div class="triangle up" onclick="changeLetter(1, 1)"></div>
+    <div class="letter-box"><div class="letter-content" id="letter1">T</div></div>
+    <div class="triangle down" onclick="changeLetter(1, -1)"></div>
+  </div>
+  <div class="column">
+    <div class="triangle up" onclick="changeLetter(2, 1)"></div>
+    <div class="letter-box"><div class="letter-content" id="letter2">F</div></div>
+    <div class="triangle down" onclick="changeLetter(2, -1)"></div>
+  </div>
+  <div class="column">
+    <div class="triangle up" onclick="changeLetter(3, 1)"></div>
+    <div class="letter-box"><div class="letter-content" id="letter3">U</div></div>
+    <div class="triangle down" onclick="changeLetter(3, -1)"></div>
+  </div>
+</div>
+
+<button id="enterBtn" onclick="checkCombination()">Enter</button>
+
+<div id="loading">
+  <div id="loadingText">Loading...</div>
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+</div>
+
+<audio id="typeSound" src="assets/audio/type.mp3" preload="auto"></audio>
+<audio id="alertSound" src="assets/audio/alert.mp3" preload="auto"></audio>
+<audio id="enterSound" src="assets/audio/button.mp3" preload="auto"></audio>
+
+
+<script>
+  const letters = ['S', 'T', 'F', 'U'];
+  const letterElements = [
+    document.getElementById('letter0'),
+    document.getElementById('letter1'),
+    document.getElementById('letter2'),
+    document.getElementById('letter3')
+  ];
+  const typeSound = document.getElementById('typeSound');
+  const enterSound = document.getElementById('enterSound');
+  const alertSound = document.getElementById('alertSound');
+
+  const bannedCombos = [
+  "FUCK", "DICK", "KNTL", "LNTE", "JNCK", "NIGA", "GAYY", "WOWO", "BIBD",
+  "BTCH", "PELI", "MEKI", "TAIK", "ANJG", "BGST", "PKMK", "KMPR", "PNTK",
+  "NGNT", "JMBT", "PLER", "PSTU", "MBUT", "JANC", "KIMK", "NGTD", "BODO",
+  "LOKO", "TULI",
+  "CUNT", "SLUT", "HOES", "FAGG", "TWAT", "JERK", "DUMB", "POOP", "SHIT",
+  "CRAP", "SUCK", "HELL", "ARSE", "PISS", "MOFO", "NUTS", "BUTT", "BOOB"
+];
+  const redirectCombos = {
+    "TIME": "jam.html",
+    "LOBI": "index.html",
+    "BALL": "run.html",
+    "PCYG": "level-6b.html"
+  };
+
+  function changeLetter(index, direction) {
+    let charCode = letters[index].charCodeAt(0);
+    charCode += direction;
+
+    if (charCode > 90) charCode = 65;
+    if (charCode < 65) charCode = 90;
+
+    letters[index] = String.fromCharCode(charCode);
+
+    typeSound.currentTime = 0;
+    typeSound.play();
+
+    const elem = letterElements[index];
+    elem.style.top = direction === 1 ? '-60px' : '60px';
+    setTimeout(() => {
+      elem.innerText = letters[index];
+      elem.style.transition = 'none';
+      elem.style.top = direction === 1 ? '60px' : '-60px';
+      setTimeout(() => {
+        elem.style.transition = 'top 0.2s ease-in-out';
+        elem.style.top = '5px';
+      }, 10);
+    }, 200);
+  }
+
+  function checkCombination() {
+    enterSound.currentTime = 0;
+    enterSound.play();
+
+    const combo = letters.join('');
+
+    if (redirectCombos[combo]) {
+      document.getElementById('loading').style.display = 'block';
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 2;
+        document.getElementById('progressFill').style.width = progress + '%';
+        if (progress >= 100) {
+          clearInterval(interval);
+          window.location.href = redirectCombos[combo];
+        }
+      }, 40);
+      return;
+    }
+
+    if (bannedCombos.includes(combo)) {
+      letterElements.forEach(elem => {
+        elem.parentElement.style.border = '3px solid red';
+      });
+    } else {
+      letterElements.forEach(elem => {
+        elem.parentElement.style.border = '3px solid #0ff';
+      });
+    }
+
+    alertSound.currentTime = 0;
+    alertSound.play();
+
+    if (navigator.vibrate) {
+      navigator.vibrate([200, 100, 200]);
+    }
+  }
+</script>
+
+</body>
+</html>
