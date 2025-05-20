@@ -20,6 +20,9 @@ canvas { background: #fff; display: block; margin: 20px auto 10px; border: 1px s
 <body>
 <div id="scoreDisplay">Score: 0 | High Score: 0</div>
 <canvas id="gameCanvas" width="200" height="360"></canvas>
+<div id="itemNotice" style="color: #0f0; margin-top: 10px; display: none;">
+  Virus Weakener is active
+</div>
 <div id="controls">
   <button onclick="moveLeft()">&lt;=</button>
   <button onclick="shoot()">Shoot</button>
@@ -50,7 +53,10 @@ const noiseLoop = document.getElementById("noiseLoop");
 const cols = 5, rows = 9, gridSize = 40;
 let playerCol = 2, playerShooting = false, bullets = [], viruses = [];
 let score = 0, speed = 1, gameActive = true, typeInterval, virusFrame = 0;
-
+const virusWeakenerActive = !!localStorage.getItem("item_level_Virus_Weakener");
+if (virusWeakenerActive) {
+  document.getElementById("itemNotice").style.display = "block";
+}
 let highScore = localStorage.getItem("level-5a-highscore") || 0;
 scoreDisplay.textContent = `Score: 0 | High Score: ${highScore}`;
 
@@ -117,7 +123,7 @@ function drawBullets() {
 function drawViruses() {
   viruses.forEach(v => {
     const spriteList = v.dead ? virusDeadSprites : virusSprites;
-    const sprite = spriteList[virusFrame % spriteList.length];
+    const sprite = spriteList[Math.floor(virusFrame / 6) % spriteList.length];
     ctx.drawImage(sprite, v.x * gridSize + 5, v.y, 35, 35);
   });
 }
@@ -152,7 +158,7 @@ function update() {
           localStorage.setItem("level-5a-highscore", highScore);
         }
         scoreDisplay.textContent = `Score: ${score} | High Score: ${highScore}`;
-        if ([100, 200, 300, 400, 500, 600, 700, 800, 900].includes(score)) speed += 0.5;
+        if ([100, 200, 300, 400, 500, 600, 700, 800, 900].includes(score)) {speed += virusWeakenerActive ? 0.2 : 0.5;}
       }
     });
   });

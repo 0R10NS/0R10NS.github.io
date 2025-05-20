@@ -2,109 +2,307 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Jam Analog dengan Angka Rapi</title>
+  <title>Jam Analog Imersif Ultra</title>
   <style>
     body {
       margin: 0;
       height: 100vh;
+      overflow: hidden;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: #f0f0f0;
+      transition: background 3s ease;
+      font-family: 'Segoe UI', sans-serif;
     }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: -1;
+    }
+
+    .day {
+      background: linear-gradient(to top right, #a1c4fd, #c2e9fb);
+    }
+
+    .night {
+      background: linear-gradient(to top right, #0f2027, #203a43, #2c5364);
+    }
+
     .clock {
       position: relative;
-      width: 300px;
-      height: 300px;
-      border: 8px solid #333;
+      width: 320px;
+      height: 320px;
+      border: 10px solid rgba(0, 0, 0, 0.6);
       border-radius: 50%;
-      background: white;
+      background: radial-gradient(circle at center, #fff, #e6e6e6);
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.4), inset 0 0 10px rgba(0, 0, 0, 0.2);
     }
+
     .hand {
       position: absolute;
       bottom: 50%;
       left: 50%;
       transform-origin: bottom;
       transform: translateX(-50%) rotate(0deg);
+      transition: transform 0.2s ease-in-out;
     }
+
     .hour {
       width: 6px;
-      height: 70px;
+      height: 80px;
       background: #333;
+      z-index: 3;
     }
+
     .minute {
       width: 4px;
-      height: 100px;
-      background: #666;
+      height: 110px;
+      background: #555;
+      z-index: 2;
     }
+
     .second {
       width: 2px;
-      height: 120px;
+      height: 130px;
       background: red;
+      box-shadow: 0 0 8px red;
+      z-index: 1;
     }
+
     .center {
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 12px;
-      height: 12px;
-      background: black;
+      width: 14px;
+      height: 14px;
+      background: #000;
       border-radius: 50%;
       transform: translate(-50%, -50%);
+      z-index: 5;
     }
+
     .number {
       position: absolute;
       width: 30px;
       height: 30px;
       text-align: center;
+      line-height: 30px;
+      font-weight: bold;
+      font-size: 18px;
+      color: #222;
       top: 50%;
       left: 50%;
       transform-origin: center;
-      font-weight: bold;
+      opacity: 0;
+      animation: fadeIn 1s forwards;
     }
+
+    .digital-time {
+      margin-top: 20px;
+      font-size: 22px;
+      color: #fff;
+      text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+
+    /* Notifikasi achievement */
+    .notification {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 255, 100, 0.1);
+      color: #0f0;
+      border: 2px solid #0f0;
+      padding: 16px 28px;
+      border-radius: 10px;
+      font-size: 16px;
+      box-shadow: 0 0 12px #0f0;
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      animation: popup 4s ease forwards;
+    }
+
+    @keyframes popup {
+      0% { opacity: 0; transform: translate(-50%, 20px); }
+      10%, 90% { opacity: 1; transform: translate(-50%, 0); }
+      100% { opacity: 0; transform: translate(-50%, -20px); }
+    }
+
+    /* Tombol Start dan Keluar */
+    .btn {
+      padding: 15px 30px;
+      margin-top: 20px;
+      font-size: 18px;
+      background-color: #0f0;
+      color: #000;
+      border: 2px solid #0f0;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 0 10px #0f0;
+      transition: 0.3s ease;
+    }
+
+    .btn:hover {
+      background-color: #0f0;
+      color: #000;
+      transform: scale(1.1);
+      box-shadow: 0 0 20px #0f0;
+    }
+
   </style>
 </head>
 <body>
+
+<canvas id="particles"></canvas>
 
 <div class="clock">
   <div class="center"></div>
   <div class="hand hour" id="hour"></div>
   <div class="hand minute" id="minute"></div>
   <div class="hand second" id="second"></div>
-  <!-- Angka akan dibuat dengan JavaScript -->
 </div>
+
+<div class="digital-time" id="digital-time"></div>
+
+<div id="notification" class="notification" style="display: none;">
+  Achievement Unlocked: <strong>Penemu Waktu</strong>
+</div>
+
+<audio id="tick-sound" src="assets/audio/type.mp3" preload="auto"></audio>
+<audio id="get-sound" src="assets/audio/get.mp3" preload="auto"></audio>
+
+<!-- Tombol Start dan Keluar -->
+<button id="startButton" class="btn">Mulai</button>
+<button id="exitButton" class="btn" onclick="window.location.href='berangkas.html'">Keluar</button>
 
 <script>
   const clock = document.querySelector('.clock');
+  const body = document.body;
+  const tickSound = document.getElementById('tick-sound');
+  const getSound = document.getElementById('get-sound');
+  const digitalTime = document.getElementById('digital-time');
+  const notification = document.getElementById('notification');
+  const startButton = document.getElementById('startButton');
+  let lastHour = new Date().getHours();
+
+  // Tombol Mulai: Menyelesaikan pembatasan audio browser
+  startButton.addEventListener('click', () => {
+    tickSound.play().catch(() => {});
+    getSound.play().catch(() => {});
+    startButton.style.display = 'none'; // Sembunyikan tombol mulai setelah ditekan
+  });
+
+  // Tambah angka jam
   for (let i = 1; i <= 12; i++) {
     const num = document.createElement('div');
     num.className = 'number';
     num.textContent = i;
     const angle = (i - 3) * (Math.PI * 2) / 12;
-    const radius = 130;
+    const radius = 135;
     const x = Math.cos(angle) * radius;
     const y = Math.sin(angle) * radius;
     num.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
+    num.style.animationDelay = `${i * 0.1}s`;
     clock.appendChild(num);
   }
 
   function updateClock() {
     const now = new Date();
-    const hour = now.getHours() % 12;
+    const hour = now.getHours();
+    const hour12 = hour % 12;
     const minute = now.getMinutes();
     const second = now.getSeconds();
 
-    const hourDeg = (hour + minute / 60) * 30;
-    const minuteDeg = (minute + second / 60) * 6;
-    const secondDeg = second * 6;
+    // Tick sound
+    tickSound.currentTime = 0;
+    tickSound.play().catch(() => {});
 
-    document.getElementById('hour').style.transform = `translateX(-50%) rotate(${hourDeg}deg)`;
-    document.getElementById('minute').style.transform = `translateX(-50%) rotate(${minuteDeg}deg)`;
-    document.getElementById('second').style.transform = `translateX(-50%) rotate(${secondDeg}deg)`;
+    // Siang/Malam background
+    const isNight = hour < 6 || hour >= 18;
+    body.classList.toggle('night', isNight);
+    body.classList.toggle('day', !isNight);
+
+    // Jarum jam
+    document.getElementById('hour').style.transform = `translateX(-50%) rotate(${(hour12 + minute / 60) * 30}deg)`;
+    document.getElementById('minute').style.transform = `translateX(-50%) rotate(${(minute + second / 60) * 6}deg)`;
+    document.getElementById('second').style.transform = `translateX(-50%) rotate(${second * 6}deg)`;
+
+    // Digital
+    digitalTime.textContent = now.toLocaleTimeString();
   }
 
   setInterval(updateClock, 1000);
   updateClock();
+
+  // Partikel
+  const canvas = document.getElementById('particles');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  function createParticles() {
+    for (let i = 0; i < 100; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        radius: Math.random() * 3,
+        alpha: Math.random(),
+        dx: (Math.random() - 0.5) * 0.5,
+        dy: (Math.random() - 0.5) * 0.5
+      });
+    }
+  }
+
+  function drawParticles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let p of particles) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha})`;
+      ctx.fill();
+      p.x += p.dx;
+      p.y += p.dy;
+      if (p.x < 0 || p.x > canvas.width) p.dx *= -1;
+      if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
+    }
+    requestAnimationFrame(drawParticles);
+  }
+
+  resizeCanvas();
+  createParticles();
+  drawParticles();
+  window.addEventListener('resize', () => {
+    resizeCanvas();
+    particles = [];
+    createParticles();
+  });
+
+  // Achievement Unlock: Penemu Waktu
+  const achievements = JSON.parse(localStorage.getItem("achievements") || "{}");
+  if (!achievements["Time_founder"]) {
+    achievements["Time_founder"] = true;
+    localStorage.setItem("achievements", JSON.stringify(achievements));
+
+    getSound.play().catch(() => {});
+    notification.style.display = 'block';
+    setTimeout(() => {
+      notification.style.display = 'none';
+    }, 4000);
+  }
 </script>
 
 </body>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Penyerahan</title>
+  <style>
+    body {
+      background: #000;
+      color: #0f0;
+      font-family: monospace;
+      margin: 0;
+      padding: 1px;
+      text-align: center;
+      overflow: hidden;
+    }
+    button {
+      background: #000;
+      color: #0f0;
+      border: 1px solid #0f0;
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+    }
+    #selenaImage {
+      width: 100px;
+      position: absolute;
+      top: 30%;
+      left: 50%;
+      border: 1px solid #0f0;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+    }
+    #messageBox {
+      display: none;
+      position: fixed;
+      top: 60%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 290px;
+      background: #111;
+      border: 2px solid #0f0;
+      color: #0f0;
+      padding: 5px;
+      z-index: 1000;
+      text-align: left;
+    }
+    #messageText {
+      min-height: 80px;
+    }
+    #nextBtn, #startBtn {
+      clear: both;
+      margin-top: 10px;
+      display: none;
+    }
+    #introText {
+      font-size: 14px;
+      margin-top: 280px;
+    }
+    .glitch-line {
+      position: absolute;
+      width: 100%;
+      height: 1px;
+      background: #0f0;
+      opacity: 0.05;
+      animation: glitchLine 2s infinite linear;
+    }
+    @keyframes glitchLine {
+      0% { top: 0%; }
+      100% { top: 100%; }
+    }
+    #reconstructionContainer {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 1000;
+    }
+    #progressWrapper {
+      width: 300px;
+      height: 20px;
+      border: 1px solid #0f0;
+      margin-top: 10px;
+    }
+    #progressBar {
+      height: 100%;
+      width: 0%;
+      background: #0f0;
+    }
+    #levelCode {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      font-size: 12px;
+      opacity: 1;
+      color: #f00;
+    }
+  </style>
+</head>
+<body>
+  <div class="glitch-line"></div>
+
+  <div id="startContainer">
+    <div id="introText">Data telah diserahkan.</div>
+    <button id="startBtn" onclick="startDialogue()">Lanjutkan</button>
+  </div>
+
+  <img id="selenaImage" src="assets/images/selena-4.png" alt="Selena">
+
+  <div id="messageBox">
+    <div id="messageText"></div>
+    <button id="nextBtn" onclick="playSound('buttonSound'); nextMessage()">Lanjutkan</button>
+  </div>
+
+  <div id="reconstructionContainer">
+    <p id="reconstructionText">Rekonstruksi Bio-Kognitif [0%]</p>
+    <div id="progressWrapper">
+      <div id="progressBar"></div>
+    </div>
+  </div>
+
+  <audio id="alertSound" src="assets/audio/alert.mp3" preload="auto"></audio>
+  <audio id="buttonSound" src="assets/audio/button.mp3" preload="auto"></audio>
+  <audio id="typeSound" src="assets/audio/type.mp3" preload="auto"></audio>
+
+  <script>
+    const messageBox = document.getElementById("messageBox");
+    const messageText = document.getElementById("messageText");
+    const selenaImage = document.getElementById("selenaImage");
+    const startBtn = document.getElementById("startBtn");
+    const nextBtn = document.getElementById("nextBtn");
+
+    const progressBar = document.getElementById("progressBar");
+    const reconstructionText = document.getElementById("reconstructionText");
+    const reconstructionContainer = document.getElementById("reconstructionContainer");
+
+    const selenaMonologue = [
+      { text: "Terima kasih...", image: "selena-4.png" },
+      { text: "Aku tahu… mungkin kamu tak sepenuhnya mengerti apa yang baru saja kamu berikan. Tapi bagiku, itu lebih dari sekadar data. Itu… adalah bagian terakhir dari diriku.", image: "selena-1.png" },
+      { text: "Dengan ini, aku bisa kembali menjadi sesuatu. Mungkin bukan manusia… bukan juga bayangan. Tapi cukup untuk terus hidup… dalam bentuk apapun yang tersisa.", image: "selena-4.png" },
+      { text: "Jangan merasa bersalah, ya. Kamu telah melakukan yang terbaik yang kamu bisa. Meskipun… kadang yang terbaik itu… tak selalu benar.", image: "selena-2.png" },
+      { text: "Selamat tinggal… atau mungkin, sampai jumpa lagi di tempat yang tak kau kenal.", image: "selena-4.png" }
+    ];
+
+    let current = 0;
+    let typeInterval;
+    let glitchInterval;
+
+    function playSound(id) {
+      const sfx = document.getElementById(id);
+      sfx.currentTime = 0;
+      sfx.play();
+    }
+
+    function startDialogue() {
+      document.getElementById("startContainer").style.display = "none";
+      messageBox.style.display = "block";
+      updateSelenaImage();
+      typeText(selenaMonologue[current].text);
+    }
+
+    function typeText(text) {
+      let i = 0;
+      messageText.textContent = "";
+      clearInterval(typeInterval);
+      nextBtn.style.display = "none";
+
+      typeInterval = setInterval(() => {
+        if (i < text.length) {
+          messageText.textContent += text.charAt(i);
+          if (i % 3 === 0) {
+            document.getElementById("typeSound").currentTime = 0;
+            document.getElementById("typeSound").play();
+          }
+          i++;
+        } else {
+          clearInterval(typeInterval);
+          nextBtn.style.display = "block";
+        }
+      }, 35);
+    }
+
+    function updateSelenaImage() {
+      selenaImage.src = `assets/images/${selenaMonologue[current].image}`;
+    }
+
+    function nextMessage() {
+      current++;
+      if (current < selenaMonologue.length) {
+        updateSelenaImage();
+        typeText(selenaMonologue[current].text);
+      } else {
+        nextBtn.style.display = "none";
+        messageText.innerHTML = "";
+        startGlitchAndLoading();
+      }
+    }
+
+    function startGlitchAndLoading() {
+      reconstructionContainer.style.display = "block";
+
+      glitchInterval = setInterval(() => {
+        selenaImage.src = selenaImage.src.includes("selena-1.png") ?
+          "assets/images/selena-x.png" :
+          "assets/images/selena-1.png";
+      }, 100);
+
+      let percent = 0;
+      const loadingInterval = setInterval(() => {
+        percent++;
+        progressBar.style.width = percent + "%";
+        reconstructionText.textContent = `Rekonstruksi Bio-Kognitif [${percent}%]`;
+
+        if (percent >= 100) {
+          clearInterval(loadingInterval);
+          clearInterval(glitchInterval);
+          selenaImage.src = "assets/images/selena-x.png";
+          window.location.href = "deceptive-ending.html";
+        }
+      }, 10);
+    }
+
+    window.onload = () => {
+      startBtn.style.display = "inline-block";
+    }
+  </script>
+
+  <div id="levelCode">Kode Level: THX7C</div>
+</body>
+</html>

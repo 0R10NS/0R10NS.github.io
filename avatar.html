@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pilih Avatar</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #0f0;
+      font-family: monospace;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background: transparent;
+      color: #0f0;
+      text-align: center;
+      padding: 15px 0;
+      font-weight: bold;
+      z-index: 1;
+    }
+    .container {
+      margin-top: 60px;
+      height: calc(100vh - 60px);
+      overflow-y: auto;
+      padding: 2px;
+    }
+    .avatar-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2px;
+      justify-items: center;
+    }
+    .avatar {
+      width: 74px;
+      height: 74px;
+      object-fit: cover;
+      border: 2px solid #0f0;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .avatar:hover {
+      transform: scale(1.1);
+    }
+    .avatar.selected {
+      border-color: yellow;
+    }
+  </style>
+</head>
+<body>
+  <header>Double klik pada gambar untuk mengganti avatar</header>
+  <div class="container">
+    <div class="avatar-grid" id="avatarGrid"></div>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+    const avatarList = Array.from({ length: 30 }, (_, i) => `avatar${i + 1}.png`);
+    let selectedAvatar = null;
+    const grid = document.getElementById("avatarGrid");
+    const playerName = localStorage.getItem("playerName");
+
+    if (!playerName) {
+      alert("Silakan login terlebih dahulu.");
+      window.location.href = "login.html";
+    }
+
+    avatarList.forEach(avatar => {
+      const img = document.createElement("img");
+      img.src = `assets/avatars/${avatar}`;
+      img.alt = avatar;
+      img.classList.add("avatar");
+      img.ondblclick = async () => {
+        document.querySelectorAll(".avatar").forEach(el => el.classList.remove("selected"));
+        img.classList.add("selected");
+        selectedAvatar = avatar;
+
+        const res = await fetch(`${BASE_URL}/Players?username=eq.${encodeURIComponent(playerName)}`, {
+          method: "PATCH",
+          headers: {
+            apikey: API_KEY,
+            Authorization: `Bearer ${API_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ avatar: selectedAvatar })
+        });
+
+        if (res.ok) {
+          alert("Avatar berhasil disimpan!");
+          window.location.href = "komentar.html";
+        } else {
+          alert("Gagal menyimpan avatar.");
+          console.error(await res.text());
+        }
+      };
+      grid.appendChild(img);
+    });
+  </script>
+</body>
+</html>

@@ -4,137 +4,211 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Proyek Orion: Lobi Utama</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <style>
-    body {
-      background-color: #000;
-      color: #00ff00;
-      font-family: 'Courier new', monospace;
-      padding: 20px;
-      margin: 0;
-      overflow-x: hidden;
-    }
-    .terminal {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 30px;
-      border: 2px solid #00ff00;
-      background-color: #001100;
-      box-shadow: 0 0 15px rgba(0,255,0,0.5);
-      border-radius: 10px;
-      position: relative;
-    }
-    h1 {
-      text-align: center;
-      text-shadow: 0 0 5px #00ff00;
-    }
-    .button, .input-button, .info-button {
-      margin-top: 20px;
-      padding: 10px 20px;
-      background: #002200;
-      color: #00ff00;
-      border: 1px solid #00ff00;
-      cursor: pointer;
-      font-size: 16px;
-      transition: background 0.3s, transform 0.2s;
-    }
-    .button:hover, .input-button:hover, .info-button:hover {
-      background: #004400;
-    }
-    .button:active, .input-button:active, .info-button:active {
-      transform: scale(0.97);
-    }
-    .info-button.ready {
-      background-color: #444400;
-      color: yellow;
-      border-color: yellow;
-    }
-    .input-code {
-      width: 100%;
-      margin-top: 20px;
-      padding: 10px;
-      font-family: 'Courier new', monospace;
-      font-size: 16px;
-      border: 1px solid #00ff00;
-      background-color: #000;
-      color: #00ff00;
-    }
-    .footer {
-      margin-top: 50px;
-      text-align: center;
-      font-size: 12px;
-      color: #007700;
-    }
-    .blink-cursor::after {
-      content: "_";
-      animation: blink 1s steps(2, start) infinite;
-    }
-    @keyframes blink {
-      to { visibility: hidden; }
-    }
-    body::before {
-      content: "";
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: url('assets/images/noise.gif');
-      opacity: 0.05;
-      pointer-events: none;
-      z-index: 1000;
-    }
-    #popupInfo {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.95);
-      color: #00ff00;
-      font-family: 'Courier new', monospace;
-      padding: 40px 20px;
-      z-index: 9999;
-      overflow-y: auto;
-    }
-    #popupContent {
-      max-width: 600px;
-      margin: auto;
-    }
-    #popupInfo button {
-      margin-top: 30px;
-    }
-    #loadingOverlay {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: rgba(0, 0, 0, 0.95);
-      z-index: 9999;
-      align-items: center;
-      justify-content: center;
-    }
-    .loading-bar {
-      width: 80%;
-      height: 20px;
-      background-color: #003300;
-      border: 1px solid #00ff00;
-      display: flex;
-    }
-    .loading-fill {
-      height: 100%;
-      width: 0%;
-      background-color: #00ff00;
-      animation: loading 3s linear forwards;
-    }
-    @keyframes loading {
-      to { width: 100%; }
-    }
+      body {
+  background-color: #000;
+  color: #00ff00;
+  font-family: 'Courier New', monospace;
+  padding: 20px;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+.terminal {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 30px;
+  border: 2px solid #00ff00;
+  background-color: #001100;
+  box-shadow: 0 0 15px rgba(0,255,0,0.5);
+  border-radius: 10px;
+  position: relative;
+}
+
+h1 {
+  text-align: center;
+  text-shadow: 0 0 5px #00ff00;
+}
+
+.button, .input-button, .info-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background: #002200;
+  color: #00ff00;
+  border: 1px solid #00ff00;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.button:hover, .input-button:hover, .info-button:hover {
+  background: #004400;
+}
+
+.button:active, .input-button:active, .info-button:active {
+  transform: scale(0.97);
+}
+
+.input-code {
+  width: 100%;
+  margin-top: 20px;
+  padding: 10px;
+  font-family: 'Courier New', monospace;
+  font-size: 16px;
+  border: 1px solid #00ff00;
+  background-color: #000;
+  color: #00ff00;
+}
+
+.footer {
+  margin-top: 50px;
+  text-align: center;
+  font-size: 12px;
+  color: #007700;
+}
+
+.blink-cursor::after {
+  content: "_";
+  animation: blink 1s steps(2, start) infinite;
+}
+
+@keyframes blink {
+  to { visibility: hidden; }
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: url('assets/images/noise.gif');
+  opacity: 0.05;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+#popupInfo {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.95);
+  color: #00ff00;
+  font-family: 'Courier New', monospace;
+  padding: 40px 20px;
+  z-index: 9999;
+  overflow-y: auto;
+}
+
+#popupContent {
+  max-width: 600px;
+  margin: auto;
+}
+
+#popupInfo button {
+  margin-top: 30px;
+}
+
+#loadingOverlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.95);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.loading-bar {
+  width: 80%;
+  height: 20px;
+  background-color: #003300;
+  border: 1px solid #00ff00;
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.loading-fill {
+  height: 100%;
+  width: 0%;
+  background-color: #00ff00;
+  animation: loading 3s linear forwards;
+}
+
+@keyframes loading {
+  to { width: 100%; }
+}
+
+.menu-button {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #002200;
+  color: #00ff00;
+  border: 1px solid #00ff00;
+  font-size: 24px;
+  padding: 10px 15px;
+  cursor: pointer;
+  z-index: 10001;
+}
+
+#menuDropdown {
+  position: fixed;
+  top: 60px;
+  right: 20px;
+  background-color: #001100;
+  border: 1px solid #00ff00;
+  padding: 10px;
+  z-index: 10000;
+  width: 220px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,255,0,0.4);
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#menuDropdown.show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+#menuDropdown button {
+  display: block;
+  width: 100%;
+  margin: 5px 0;
+  text-align: left;
+  font-size: 14px;
+}
+
+.info-button.ready {
+  background-color: #444400;
+  color: yellow;
+  border-color: yellow;
+}
   </style>
 </head>
 <body>
+
+  <!-- Menu hamburger dan dropdown -->
+  <button class="menu-button" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
+  <div id="menuDropdown">
+    <button class="button" onclick="bukaManager()"><i class="fas fa-database"></i> Storage Manager</button>
+    <button class="button" onclick="bukaKomentar()"><i class="fas fa-comments"></i> Komentar</button>
+    <button class="button" onclick="bukaAchievements()"><i class="fas fa-trophy"></i> Achievements</button>
+  </div>
+
   <div class="terminal">
     <h1>PROYEK ORION</h1>
     <div id="introText" class="blink-cursor"></div>
-    <button id="infoBtn" class="info-button" onclick="tampilkanIntro()">(?)</button>
+    <button id="infoBtn" class="info-button">(?)</button>
     <button class="button" onclick="mulai()">Mulai</button>
     <textarea id="kodeInput" class="input-code" rows="2" placeholder="Tulis kode level untuk lompati level..."></textarea>
     <button class="input-button" onclick="masuk()">Akses Kode Level</button>
-    <button class="button" onclick="bukaManager()">Progress Storage Manager</button>
   </div>
+
   <div class="footer">
     &copy; 2026 Orion Initiative <br />==== SYSTEM ACTIVE ====
   </div>
@@ -151,148 +225,218 @@
     <div class="loading-bar">
       <div class="loading-fill"></div>
     </div>
+    <p style="text-align:center; margin-top:10px; color:#0f0;">LOADING...</p>
   </div>
 
   <audio id="clickSound" src="assets/audio/button.mp3" preload="auto"></audio>
   <audio id="typeSound" src="assets/audio/type.mp3" preload="auto"></audio>
 
   <script>
-    const clickSound = document.getElementById('clickSound');
-    const typeSound = document.getElementById('typeSound');
-    const introText = document.getElementById("introText");
-    const infoBtn = document.getElementById("infoBtn");
-    const popupInfo = document.getElementById("popupInfo");
-    const popupText = document.getElementById("popupText");
-    const loadingOverlay = document.getElementById("loadingOverlay");
+  const clickSound = document.getElementById('clickSound');
+  const typeSound = document.getElementById('typeSound');
+  const introText = document.getElementById("introText");
+  const infoBtn = document.getElementById("infoBtn");
+  const popupInfo = document.getElementById("popupInfo");
+  const popupText = document.getElementById("popupText");
+  const loadingOverlay = document.getElementById("loadingOverlay");
+  let gagalHitung = 0;
 
-    function playSound() {
+  document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
       clickSound.currentTime = 0;
       clickSound.play();
+    });
+  });
+
+  // Tambahkan ini SATU KALI SAJA
+  infoBtn.addEventListener('click', jalankanIntroSekali);
+
+    const savedKode = localStorage.getItem('Kode_Level');
+    if (savedKode) document.getElementById('kodeInput').value = savedKode;
+
+    const playerName = localStorage.getItem('playerName');
+    const nameValid = playerName && playerName.length <= 20 &&
+                      /^[A-Za-z0-9\-]+$/.test(playerName) &&
+                      !/^[-\s]+$/.test(playerName);
+
+    if (!nameValid) {
+      window.location.href = "login.html";
+    } else {
+      updateWelcomeMessage();
     }
 
-    function mulai() {
-      playSound();
-      showLoading(() => {
-        window.location.href = "level-1.html";
-      });
-    }
-
-    function masuk() {
-      playSound();
-      const kode = document.getElementById("kodeInput").value.trim().toUpperCase();
-      const kodeMap = {
-        "END1-TRUE": "ending-2.html",
-        "134D-N": "ending-1.html",
-        "001": "level-1.html",
-        "BOOLL": "run.html",
-        "7271V2": "level-2.html",
-        "V1CT1M": "level-3.html",
-        "LVL4A1": "level-4a1.html",
-        "LVL4A2": "level-4a2.html",
-        "LS4B1": "level-4b1.html",
-        "DS4B2": "level-4b2.html",
-        "RPG5A1": "level-5a1.html",
-        "FSS5A2": "level-5a2.html",
-        "TKP5B": "level-5b.html",
-        "4R51P": "level-6a.html",
-        "LACI6B": "level-6b.html",
-        "57D4T4": "level-7a.html",
-        "KLMEM": "kelola_memori.html",
-        "KODOK": "mini_game.html",
-        "XOXO": "XOXO.html",
-        "SNAKE": "ular.html"
-      };
-      if (kodeMap[kode]) {
-        // simpan ke history jika belum ada
-        let history = JSON.parse(localStorage.getItem('Kode_Level_History')) || [];
-        if (!history.includes(kode)) {
-          history.push(kode);
-          localStorage.setItem('Kode_Level_History', JSON.stringify(history));
-        }
-        showLoading(() => {
-          window.location.href = kodeMap[kode];
-        });
-      } else {
-        alert("Kode tidak dikenal.");
-      }
-    }
-
-    function bukaManager() {
-      playSound();
-      showLoading(() => {
-        window.location.href = "manager.html";
-      });
-    }
-
-    function tampilkanIntro() {
-      const teks = "Selamat datang, Agen.\nMasuki kedalaman proyek rahasia, pecahkan kebenaran yang dikubur. \nTekan (?) untuk info lebih lanjut.";
-      introText.innerHTML = "";
-      let i = 0;
-      function ketik() {
-        if (i < teks.length) {
-          typeSound.currentTime = 0;
-          typeSound.play();
-          introText.innerHTML += teks.charAt(i) === "\n" ? "<br>" : teks.charAt(i);
-          i++;
-          setTimeout(ketik, 50);
-        } else {
-          infoBtn.classList.add("ready");
-          infoBtn.onclick = tampilkanPopup;
-        }
-      }
-      ketik();
-    }
-
-    function tampilkanPopup() {
-      const infoText = `Selamat datang di Proyek Orion.
-
-Ini adalah permainan eksplorasi naratif interaktif dengan elemen misteri.
-Kamu berperan sebagai agen rahasia yang harus mengungkap kebenaran tersembunyi dari arsip digital.
-
-Catatan penting:
-- Sediakan catatan fisik/digital untuk mencatat kode level.
-- Setiap level memiliki kode unik yang berfungsi sebagai checkpoint manual.
-- Terdapat 4 cabang ending, salah satunya adalah ending rahasia.
-
-Siapkah kamu menggali kedalaman informasi?`;
-      popupText.innerHTML = "";
-      popupInfo.style.display = "block";
-      let i = 0;
-      function ketikInfo() {
-        if (i < infoText.length) {
-          typeSound.currentTime = 0;
-          typeSound.play();
-          popupText.innerHTML += infoText.charAt(i) === "\n" ? "<br>" : infoText.charAt(i);
-          i++;
-          setTimeout(ketikInfo, 20);
-        }
-      }
-      ketikInfo();
-    }
-
-    function tutupPopup() {
-      popupInfo.style.display = "none";
-    }
-
-    function showLoading(callback) {
-      loadingOverlay.style.display = "flex";
-      setTimeout(() => {
-        callback();
-      }, 3000);
-    }
-
-    // Load input terakhir
-    window.addEventListener('DOMContentLoaded', () => {
-      const savedKode = localStorage.getItem('Kode_Level');
-      if (savedKode) {
-        document.getElementById('kodeInput').value = savedKode;
+    document.addEventListener('click', function (event) {
+      const menu = document.getElementById("menuDropdown");
+      const button = document.querySelector(".menu-button");
+      if (!menu.contains(event.target) && !button.contains(event.target)) {
+        menu.classList.remove("show");
       }
     });
+  });
 
-    // Simpan input saat user mengetik
-    document.getElementById('kodeInput').addEventListener('input', (e) => {
-      localStorage.setItem('Kode_Level', e.target.value);
+  function toggleMenu() {
+    document.getElementById("menuDropdown").classList.toggle("show");
+  }
+
+  function mulai() {
+    showLoading(() => {
+      window.location.href = "level-1.html";
     });
-  </script>
+  }
+
+  function masuk() {
+    const kode = document.getElementById("kodeInput").value.trim().toUpperCase();
+    const kodeMap = {
+      "END1-TRUE": "ending-2.html",
+      "134D-N": "ending-1.html",
+      "001": "level-1.html",
+      "BOOLL": "run.html",
+      "7271V2": "level-2.html",
+      "V1CT1M": "level-3.html",
+      "LVL4A1": "level-4a1.html",
+      "LVL4A2": "level-4a2.html",
+      "LS4B1": "level-4b1.html",
+      "DS4B2": "level-4b2.html",
+      "RPG5A1": "level-5a1.html",
+      "FSS5A2": "level-5a2.html",
+      "TKP5B": "level-5b.html",
+      "4R51P": "level-6a.html",
+      "LACI6B": "level-6b.html",
+      "DC-SN": "level-6b2.html",
+      "57D4T4": "level-7a.html",
+      "PVP7B": "level-7b.html",
+      "SECRET": "secret.html",
+      "DE4D-N": "dead-ending.html",
+      "LOCKER": "berangkas.html",
+      "DS-BUKTI": "bukti.html",
+      "TIME": "jam.html",
+      "KLMEM": "kelola_memori.html",
+      "KODOK": "mini_game.html",
+      "XOXO": "XOXO.html",
+      "SNAKE": "ular.html"
+    };
+
+    if (kodeMap[kode]) {
+      let history = JSON.parse(localStorage.getItem('Kode_Level_History')) || [];
+      if (!history.includes(kode)) {
+        history.push(kode);
+        localStorage.setItem('Kode_Level_History', JSON.stringify(history));
+      }
+      showLoading(() => {
+        window.location.href = kodeMap[kode];
+      });
+    } else {
+      gagalHitung++;
+      alert("Kode tidak dikenal.");
+      if (gagalHitung >= 3) {
+        setTimeout(() => {
+          alert(">>> Sistem mendeteksi entri tidak valid berulang...\nApakah kamu butuh bantuan?");
+        }, 500);
+        gagalHitung = 0;
+      }
+    }
+  }
+
+  function bukaManager() {
+    showLoading(() => {
+      window.location.href = "manager.html";
+    });
+  }
+
+  function bukaKomentar() {
+    showLoading(() => {
+      window.location.href = "Komentar.html";
+    });
+  }
+
+  function bukaAchievements() {
+    showLoading(() => {
+      window.location.href = "achievements.html";
+    });
+  }
+
+  function tampilkanIntro(callback) {
+  const teks = "Masuki kedalaman proyek rahasia, pecahkan kebenaran yang dikubur.\nTekan (?) untuk info lebih lanjut.";
+  introText.innerHTML = "";
+  let i = 0;
+  function ketik() {
+    if (i < teks.length) {
+      typeSound.currentTime = 0;
+      typeSound.play();
+      introText.innerHTML += teks.charAt(i) === "\n" ? "<br>" : teks.charAt(i);
+      i++;
+      setTimeout(ketik, 50);
+    } else if (typeof callback === "function") {
+      callback(); // panggil setelah intro selesai
+    }
+  }
+  ketik();
+}
+
+  function tampilkanPopup() {
+    const infoText = `Selamat datang di Proyek Orion.\n\nIni adalah permainan eksplorasi naratif interaktif dengan elemen misteri.\nKamu berperan sebagai agen rahasia yang harus mengungkap kebenaran tersembunyi dari arsip digital.\n\nCatatan penting:\n- Sediakan catatan fisik/digital untuk mencatat kode level.\n- Setiap level memiliki kode unik yang berfungsi sebagai checkpoint manual.\n- Terdapat beberapa cabang ending, salah satunya adalah ending rahasia.\n\nSiapkah kamu menggali kedalaman informasi?`;
+    popupText.innerHTML = "";
+    popupInfo.style.display = "block";
+    let i = 0;
+    function ketikInfo() {
+      if (i < infoText.length) {
+        typeSound.currentTime = 0;
+        typeSound.play();
+        popupText.innerHTML += infoText.charAt(i) === "\n" ? "<br>" : infoText.charAt(i);
+        i++;
+        setTimeout(ketikInfo, 20);
+      }
+    }
+    ketikInfo();
+  }
+
+  function tutupPopup() {
+    popupInfo.style.display = "none";
+  }
+
+  function showLoading(callback) {
+    loadingOverlay.style.display = "flex";
+    setTimeout(() => {
+      callback();
+    }, 3000);
+  }
+
+  function updateWelcomeMessage() {
+    const name = localStorage.getItem("playerName");
+    if (name) {
+      const h1 = document.querySelector("h1");
+      if (h1 && !document.getElementById("welcomeMessage")) {
+        const p = document.createElement("p");
+        p.id = "welcomeMessage";
+        p.textContent = `Selamat datang, ${name}`;
+        p.style.marginTop = "10px";
+        p.style.fontSize = "16px";
+        p.style.color = "#00ff00";
+        p.style.textAlign = "center";
+        h1.insertAdjacentElement("afterend", p);
+      }
+    }
+  }
+
+  document.getElementById('kodeInput').addEventListener('input', (e) => {
+    localStorage.setItem('Kode_Level', e.target.value);
+  });
+  
+  let introSudahJalan = false;
+
+function jalankanIntroSekali() {
+  if (introSudahJalan) {
+    tampilkanPopup();
+  } else {
+    introSudahJalan = true;
+    infoBtn.disabled = true;
+    tampilkanIntro(() => {
+      infoBtn.classList.add("ready");
+      infoBtn.disabled = false;
+    });
+  }
+}
+</script>
 </body>
 </html>

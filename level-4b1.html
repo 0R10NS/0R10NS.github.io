@@ -256,6 +256,41 @@
     };
   });
 
+  // Tambahkan folder bukti_lengkap jika all_evidence_file === true
+  if (localStorage.getItem("all_evidence_file") === "true") {
+    const evidenceFolder = {
+      name: "bukti_lengkap",
+      icon: "assets/images/folder.png",
+      type: "evidence"
+    };
+
+    const div = document.createElement("div");
+    div.className = "file";
+    div.dataset.name = evidenceFolder.name;
+    div.dataset.type = evidenceFolder.type;
+    div.draggable = true;
+
+    const img = document.createElement("img");
+    img.src = evidenceFolder.icon;
+
+    const label = document.createElement("span");
+    label.textContent = evidenceFolder.name;
+
+    div.appendChild(img);
+    div.appendChild(label);
+    grid.appendChild(div);
+
+    div.ondblclick = (e) => {
+      e.preventDefault();
+      buttonSound.currentTime = 0;
+      buttonSound.play();
+      currentFile = evidenceFolder;
+      contextMenu.style.left = e.pageX + 'px';
+      contextMenu.style.top = e.pageY + 'px';
+      contextMenu.style.display = 'block';
+    };
+  }
+
   function showPopup(message, isAlert = false) {
     document.getElementById("popupMessage").textContent = message;
     popup.classList.toggle("alert", isAlert);
@@ -294,6 +329,9 @@
     } else if (currentFile.type === "folder") {
       closeContextMenu();
       showLoadingAndRedirect("kelola_memori.html");
+    } else if (currentFile.type === "evidence") {
+      closeContextMenu();
+      showLoadingAndRedirect("bukti.html");
     }
   }
 

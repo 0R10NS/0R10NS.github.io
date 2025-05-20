@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>True Ending</title>
+  <title>Truth Ending</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
@@ -18,9 +18,9 @@
     }
 
     .container {
-      max-width: 800px;
+      max-width: 280px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 10px;
     }
 
     .terminal {
@@ -30,7 +30,7 @@
       box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
       display: flex;
       flex-direction: column;
-      height: 80vh;
+      height: 100vh;
     }
 
     .terminal::before {
@@ -45,7 +45,7 @@
     }
 
     .terminal::after {
-      content: "ORION_TERMINAL v3.7.2";
+      content: "MISSION REWARD - CLASSIFIED FILES";
       position: absolute;
       top: 5px;
       left: 10px;
@@ -100,8 +100,8 @@
 
     .back-button {
       display: block;
-      width: 200px;
-      margin: 30px auto;
+      width: 120px;
+      margin: 1px auto;
       padding: 12px;
       background: #003300;
       color: #00ff00;
@@ -172,9 +172,9 @@
 <body>
   <div class="container">
     <div class="terminal">
-      <h1 id="main-title">AKSES DIBERIKAN: PROYEK ORION</h1>
+      <h1 id="main-title">MISSION COMPLETE: TRUTH UNVEILED</h1>
 
-      <button id="openPopup" style="margin:auto; padding:10px; background:#002200; color:#00ff00; border:1px solid #00ff00; cursor:pointer;">Buka Data</button>
+      <button id="openPopup" style="margin:auto; padding:10px; background:#002200; color:#00ff00; border:1px solid #00ff00; cursor:pointer;">Lihat Kebenaran</button>
 
       <div class="code-display">LEVEL CODE: END1-TRUE</div>
       <a href="index.html" class="back-button" id="back-button">Kembali ke Lobi</a>
@@ -200,7 +200,7 @@
   </div>
 
   <audio id="button-sound" src="assets/audio/button.mp3" preload="auto"></audio>
-
+  <audio id="bg-music" src="assets/audio/TheFatRat - Xenogenesis Outro Song But Only The Best Part.mp3" loop preload="auto"></audio>
   <script>
   document.addEventListener('DOMContentLoaded', function () {
     const title = document.getElementById('main-title');
@@ -251,10 +251,21 @@
     }
 
     openPopup.addEventListener('click', function () {
-      buttonSound.currentTime = 0;
-      buttonSound.play();
-      popupOverlay.style.display = 'flex';
-    });
+  buttonSound.currentTime = 0;
+  buttonSound.play();
+  popupOverlay.style.display = 'flex';
+
+  // Mainkan musik latar
+  const bgMusic = document.getElementById('bg-music');
+  bgMusic.play().catch(e => {
+    console.warn("Autoplay prevented:", e);
+  });
+
+  // Simpan achievement ke localStorage dalam bentuk JSON
+  let achievements = JSON.parse(localStorage.getItem('achievements')) || {};
+  achievements.truth_ending = true;
+  localStorage.setItem('achievements', JSON.stringify(achievements));
+});
 
     closePopup.addEventListener('click', function () {
       buttonSound.currentTime = 0;

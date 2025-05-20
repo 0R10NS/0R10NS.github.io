@@ -10,10 +10,10 @@
       font-display: swap;
     }
     @font-face {
-  font-family: 'fontello';
-  src: url('assets/media/fontello.ttf') format('truetype');
-}
-.icon-menu:before {font-family: 'fontello'; content: '\f0c9';}
+      font-family: 'fontello';
+      src: url('assets/media/fontello.ttf') format('truetype');
+    }
+    .icon-menu:before {font-family: 'fontello'; content: '\f0c9';}
 
     :root {
       --bg-light: #f9f9f9;
@@ -87,6 +87,8 @@
       padding: 12px;
       text-align: left;
       font-size: 16px;
+      word-break: break-word;
+      white-space: pre-wrap;
     }
 
     body.light th {
@@ -188,7 +190,6 @@
       }
       td:nth-of-type(1)::before { content: "Key"; }
       td:nth-of-type(2)::before { content: "Data"; }
-      
     }
 
     #modalOverlay {
@@ -255,7 +256,7 @@
       <tr>
         <th>Key</th>
         <th class="data-col">Data</th>
-        
+        <th>Aksi</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -314,12 +315,13 @@
       const mode = localStorage.getItem('mode') || 'player';
       storageTable.innerHTML = '';
       const keys = Object.keys(localStorage).sort();
+      const filters = ["level", "achievements", "item", "uploaded"];
       const filteredKeys = mode === 'player'
-        ? keys.filter(key => key.toLowerCase().includes("level"))
+        ? keys.filter(key => filters.some(f => key.toLowerCase().includes(f)))
         : keys;
 
       if (filteredKeys.length === 0) {
-        storageTable.innerHTML = `<tr><td colspan="${mode === 'developer' ? 3 : 2}">Tidak ada data${mode === 'player' ? ' level' : ''} di localStorage.</td></tr>`;
+        storageTable.innerHTML = `<tr><td colspan="${mode === 'developer' ? 3 : 2}">Tidak ada data${mode === 'player' ? ' yang relevan' : ''} di localStorage.</td></tr>`;
         return;
       }
 
@@ -329,7 +331,7 @@
         const row = document.createElement('tr');
         row.innerHTML = `
           <td>${key}</td>
-          ${mode === 'developer' ? `<td>${truncatedValue}</td>` : ''}
+          ${mode === 'developer' ? `<td>${value}</td>` : ''}
           <td><button onclick="handleDelete('${key}')">Hapus</button></td>
         `;
         storageTable.appendChild(row);
@@ -350,6 +352,10 @@
     }
 
     async function handleDelete(key) {
+      if (key === "playerName") {
+        alert("Key 'playerName' tidak dapat dihapus.");
+        return;
+      }
       const confirmed = await showModal(`Yakin mau hapus data "${key}"?`);
       if (confirmed) {
         localStorage.removeItem(key);
@@ -360,7 +366,11 @@
     async function handleDeleteAll() {
       const confirmed = await showModal('Yakin mau hapus semua data?');
       if (confirmed) {
+        const savedName = localStorage.getItem("playerName");
         localStorage.clear();
+        if (savedName !== null) {
+          localStorage.setItem("playerName", savedName);
+        }
         renderStorage();
       }
     }

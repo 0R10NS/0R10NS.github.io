@@ -1,0 +1,194 @@
+
+    body {
+      background-color: #000;
+      color: #00ff00;
+      font-family: 'Space Mono', monospace;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+
+    .frame-player {
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .frame-player img {
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+      border: 2px solid #00ff00;
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+    }
+
+    .narrative {
+      display: none;
+      border: 1px solid #00ff00;
+      padding: 30px;
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .narrative h1 {
+      text-align: center;
+      font-size: 28px;
+      text-shadow: 0 0 5px #00ff00;
+      margin-bottom: 30px;
+    }
+
+    .glitch {
+      position: relative;
+      color: #00ff00;
+      animation: glitch 1s infinite;
+    }
+
+    @keyframes glitch {
+      0% { text-shadow: 2px 0 red, -2px 0 blue; }
+      20% { text-shadow: -2px 0 red, 2px 0 blue; }
+      40% { text-shadow: 2px 0 red, -2px 0 blue; }
+      60% { text-shadow: -2px 0 red, 2px 0 blue; }
+      80% { text-shadow: 2px 0 red, -2px 0 blue; }
+      100% { text-shadow: 0 0 transparent; }
+    }
+
+    p {
+      margin: 20px 0;
+      min-height: 1.2em;
+    }
+
+    .highlight {
+      color: #ffffff;
+      font-weight: bold;
+      text-shadow: 0 0 5px #00ff00;
+    }
+
+    .code-display {
+      background: #002200;
+      padding: 15px;
+      border-left: 3px solid #00ff00;
+      font-size: 20px;
+      text-align: center;
+      margin: 30px 0;
+    }
+
+    .back-button {
+      display: block;
+      width: 220px;
+      margin: 30px auto;
+      padding: 12px;
+      background: #003300;
+      color: #00ff00;
+      text-align: center;
+      text-decoration: none;
+      border: 1px solid #00ff00;
+      cursor: pointer;
+    }
+
+    .back-button:hover {
+      background: #004400;
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.7);
+      transform: translateY(-3px);
+    }
+
+    .popup-start {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    .popup-box {
+      background: #001100;
+      border: 2px solid #00ff00;
+      padding: 30px;
+      text-align: center;
+      color: #00ff00;
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.7);
+    }
+
+    .popup-box button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #002200;
+      border: 1px solid #00ff00;
+      color: #00ff00;
+      cursor: pointer;
+    }
+
+    .popup-box button:hover {
+      background: #004400;
+    }
+
+    @media (max-width: 600px) {
+      .frame-player img {
+        width: 100%;
+        height: auto;
+      }
+
+      .narrative {
+        padding: 20px;
+      }
+
+      .popup-box {
+        padding: 20px;
+      }
+    }
+    
+#continuePopup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+#continuePopup .popup-box {
+  background: #001100;
+  border: 2px solid #00ff00;
+  padding: 30px;
+  text-align: center;
+  color: #00ff00;
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.7);
+}
+
+#continuePopup .popup-box p {
+  margin-bottom: 20px;
+  font-family: 'Space Mono', monospace;
+}
+
+#continuePopup .popup-box button {
+  padding: 10px 20px;
+  background: #002200;
+  border: 1px solid #00ff00;
+  color: #00ff00;
+  cursor: pointer;
+  font-family: 'Space Mono', monospace;
+}
+
+#continuePopup .popup-box button:hover {
+  background: #004400;
+}

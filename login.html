@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login Player - Proyek Orion</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #0f0;
+      font-family: 'Courier New', monospace;
+      text-align: center;
+      padding: 40px;
+    }
+    .box {
+      max-width: 400px;
+      margin: auto;
+      padding: 20px;
+      border: 2px solid #0f0;
+      background: #001100;
+      border-radius: 10px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      background: #000;
+      border: 1px solid #0f0;
+      color: #0f0;
+      font-family: monospace;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: #002200;
+      border: 1px solid #0f0;
+      color: #0f0;
+      font-family: monospace;
+      cursor: pointer;
+    }
+    #switchToLogin {
+      background: transparent;
+      border: none;
+      text-decoration: underline;
+      margin-top: 10px;
+      color: #0f0;
+      cursor: pointer;
+    }
+    .error {
+      color: red;
+      margin-top: 10px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>LOGIN / DAFTAR</h2>
+    <input type="text" id="playerName" placeholder="Nama Pemain (unik)" maxlength="20" />
+    <input type="password" id="playerPassword" placeholder="Password" />
+    <label>
+      <input type="checkbox" id="rememberMe" /> Ingat saya
+    </label>
+    <button id="registerBtn" onclick="register()">Daftar</button>
+    <button id="loginBtn" onclick="login()" style="display:none;">Login</button>
+    <button id="switchToLogin" style="display:none;" onclick="showLogin()">Kamu yang punya nama ini?</button>
+    <div class="error" id="authError"></div>
+  </div>
+
+  <script>
+    const BASE_URL = "https://hnwcewqtiotmlpltoowi.supabase.co/rest/v1";
+    const API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhud2Nld3F0aW90bWxwbHRvb3dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY2Njc4MTcsImV4cCI6MjA2MjI0MzgxN30.aWJtBV0QlPx3AvLOLGfn_1UX2iODO8ijwxz2xD_kyJ4";
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const remembered = localStorage.getItem("rememberMe");
+      const name = localStorage.getItem("playerName");
+      if (remembered && name) {
+        window.location.href = "index.html";
+      }
+    });
+
+    async function hashPassword(password) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(password);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    async function checkUsernameExists(username) {
+      const res = await fetch(`${BASE_URL}/Players?username=eq.${encodeURIComponent(username)}`, {
+        headers: {
+          apikey: API_KEY,
+          Authorization: `Bearer ${API_KEY}`
+        }
+      });
+      const data = await res.json();
+      return data.length > 0 ? data[0] : null;
+    }
+
+    async function register() {
+      const username = document.getElementById("playerName").value.trim();
+      const password = document.getElementById("playerPassword").value.trim();
+      const errorEl = document.getElementById("authError");
+
+      if (!username || !password) {
+        errorEl.textContent = "Isi nama dan password.";
+        return;
+      }
+
+      if (!/^[A-Za-z0-9\-]+$/.test(username)) {
+        errorEl.textContent = "Nama hanya boleh huruf, angka, dan strip.";
+        return;
+      }
+
+      const existing = await checkUsernameExists(username);
+      if (existing) {
+        errorEl.textContent = "Nama sudah digunakan.";
+        document.getElementById("registerBtn").style.display = "none";
+        document.getElementById("switchToLogin").style.display = "inline-block";
+        document.getElementById("loginBtn").style.display = "inline-block";
+        return;
+      }
+
+      const hash = await hashPassword(password);
+      const res = await fetch(`${BASE_URL}/Players`, {
+        method: "POST",
+        headers: {
+          apikey: API_KEY,
+          Authorization: `Bearer ${API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          username: username,
+          password_hash: hash,
+          avatar: null
+        })
+      });
+
+      if (res.ok) {
+        localStorage.setItem("playerName", username);
+        if (document.getElementById("rememberMe").checked) {
+          localStorage.setItem("rememberMe", "true");
+        } else {
+          localStorage.removeItem("rememberMe");
+        }
+        alert("Akun berhasil dibuat!");
+        window.location.href = "index.html";
+      } else {
+        errorEl.textContent = "Gagal mendaftar.";
+      }
+    }
+
+    async function login() {
+  const username = document.getElementById("playerName").value.trim();
+  const password = document.getElementById("playerPassword").value.trim();
+  const errorEl = document.getElementById("authError");
+
+  if (!username || !password) {
+    errorEl.textContent = "Isi nama dan password.";
+    return;
+  }
+
+  const user = await checkUsernameExists(username);
+  if (!user) {
+    errorEl.textContent = "Nama tidak ditemukan.";
+    return;
+  }
+
+  const inputHash = await hashPassword(password);
+  const match = inputHash === user.password_hash;
+
+  if (!match) {
+    errorEl.textContent = "Password salah.";
+    return;
+  }
+
+  localStorage.setItem("playerName", user.username);
+  if (document.getElementById("rememberMe").checked) {
+    localStorage.setItem("rememberMe", "true");
+  } else {
+    localStorage.removeItem("rememberMe");
+  }
+
+  // Jika avatar kosong, isi dengan avatar acak
+  if (!user.avatar) {
+    const randomAvatar = `avatar${Math.floor(Math.random() * 30) + 1}.png`;
+    await fetch(`${BASE_URL}/Players?username=eq.${encodeURIComponent(user.username)}`, {
+      method: "PATCH",
+      headers: {
+        apikey: API_KEY,
+        Authorization: `Bearer ${API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ avatar: randomAvatar })
+    });
+  }
+
+  alert("Login berhasil!");
+  window.location.href = "index.html";
+}
+
+    function showLogin() {
+      document.getElementById("registerBtn").style.display = "none";
+      document.getElementById("loginBtn").style.display = "inline-block";
+      document.getElementById("switchToLogin").style.display = "none";
+      document.getElementById("authError").textContent = "";
+      document.getElementById("playerPassword").value = "";
+    }
+  </script>
+</body>
+</html>

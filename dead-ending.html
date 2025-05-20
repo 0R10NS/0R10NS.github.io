@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>dead-ending</title>
+ <link rel="stylesheet" href="dead-ending.css">  
+</head>
+<body>
+  <!-- POPUP -->
+  <div class="popup-start" id="startPopup">
+    <div class="popup-box">
+      <p id="popupText">Agen telah mati.</p>
+      <button id="startBtn">OK</button>
+    </div>
+  </div>
+
+  <div class="container" id="mainContent" style="display:none;">
+    <!-- Frame Player -->
+    <div class="frame-player" id="frame-container">
+      <img id="frame" src="assets/images/frame-001.png" alt="dead-ending">
+    </div>
+<div id="continuePopup" style="display: none;">
+  <div class="popup-box">
+    <p>Lanjutkan ke laporan misi terakhir?</p>
+    <button id="continueBtn">Lanjutkan</button>
+  </div>
+</div>
+    <!-- Narasi -->
+    <div class="narrative" id="narrative">
+      <h1 id="typeTitle" class="glitch"></h1>
+      <div id="content">
+        <p id="line1"></p>
+        <p id="line2"></p>
+        <p id="line3"></p>
+        <p id="line4"></p>
+        <p id="line5"></p>
+        <p id="line6"></p>
+        <p id="line7"></p>
+      </div>
+      <div class="code-display">LEVEL CODE: DE4D-N</div>
+      <a href="index.html" class="back-button">Kembali ke Awal</a>
+    </div>
+  </div>
+
+  <!-- Audio -->
+  <audio id="bgLoopType" src="assets/audio/type.mp3" preload="auto" loop></audio>
+  <audio id="typeSound" src="assets/audio/type.mp3" preload="auto"></audio>
+
+  <script src="dead-ending.js"></script>
+</body>
+</html>

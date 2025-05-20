@@ -1,0 +1,206 @@
+<!DOCTYPE html><html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>peralihan</title>
+  <style>
+    body {
+      background: #000;
+      color: #0f0;
+      font-family: monospace;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+      overflow: hidden;
+    }
+    button {
+      background: #000;
+      color: #0f0;
+      border: 1px solid #0f0;
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    #messageBox {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 300px;
+      background: #111;
+      border: 2px solid #0f0;
+      color: #0f0;
+      padding: 10px;
+      z-index: 1000;
+      text-align: left;
+    }
+    #messageBox img {
+      width: 100px;
+      float: left;
+      margin-right: 10px;
+    }
+    #messageText {
+      min-height: 80px;
+    }
+    #nextBtn, #startBtn {
+      clear: both;
+      margin-top: 10px;
+      display: none;
+    }
+    #finalButtons {
+      display: none;
+      margin-top: 20px;
+      text-align: center;
+    }
+    #introText {
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    .glitch-line {
+      position: absolute;
+      width: 100%;
+      height: 1px;
+      background: #0f0;
+      opacity: 0.05;
+      animation: glitchLine 2s infinite linear;
+    }
+    @keyframes glitchLine {
+      0% { top: 0%; }
+      100% { top: 100%; }
+    }
+    #levelCode {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      font-size: 12px;
+      opacity: 1;
+      color: #f00;
+    }
+  </style>
+</head>
+<body>
+  <div class="glitch-line"></div>  <div id="startContainer">
+    <div id="introText">Langkahmu terhenti... Selena menghampirimu dari balik cahaya digital yang samar.</div>
+    <button id="startBtn" onclick="startDialogue()">Temui Dia</button>
+  </div>  <div id="messageBox">
+    <img id="selenaImage" src="assets/images/selena-1.png" alt="Selena">
+    <div id="messageText"></div>
+    <button id="nextBtn" onclick="playSound('buttonSound'); nextMessage()">Lanjutkan</button>
+    <div id="finalButtons">
+      <button onclick="playSound('buttonSound'); window.location.href='level-7c.html'">Berikan Data</button>
+      <button onclick="playSound('buttonSound'); window.location.href='level-7b.html'">Simpan Data</button>
+    </div>
+    
+  </div><audio id="alertSound" src="assets/audio/alert.mp3" preload="auto"></audio> <audio id="buttonSound" src="assets/audio/button.mp3" preload="auto"></audio> <audio id="typeSound" src="assets/audio/type.mp3" preload="auto"></audio>
+
+  <script>
+    const messageBox = document.getElementById("messageBox");
+    const messageText = document.getElementById("messageText");
+    const selenaImage = document.getElementById("selenaImage");
+    const alertSound = document.getElementById("alertSound");
+    const buttonSound = document.getElementById("buttonSound");
+    const typeSound = document.getElementById("typeSound");
+    const startBtn = document.getElementById("startBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const finalButtons = document.getElementById("finalButtons");
+
+    const finalSelenaMonologue = [
+      {
+        text: "Aku tidak mengira kamu menghapus rekamanku yang sebelumnya… tapi tidak apa-apa. Mungkin itu memang sudah tak layak didengar. Aku mengerti.",
+        image: "selena-1.png"
+      },
+      {
+        text: "Tapi kamu tetap datang. Kamu tetap… mencariku. Entah kenapa, itu cukup membuatku merasa utuh kembali.",
+        image: "selena-4.png"
+      },
+      {
+        text: "David… dia selalu bilang padaku, ‘Kalau kamu hilang, aku akan tinggalkan tanda di dunia ini. Seseorang pasti akan menemukannya.’ Dan kamu… kamu menemukannya, bukan?",
+        image: "selena-2.png"
+      },
+      {
+        text: "Aneh ya… aku bahkan tidak tahu siapa kamu. Tapi kamu… tahu banyak tentangku. Kadang itu menakutkan, tapi juga menenangkan.",
+        image: "selena-1.png"
+      },
+      {
+        text: "Aku nggak akan paksa kamu kasih datanya. Tapi aku ingin kamu tahu… kalau kamu menyimpannya sendiri, kamu harus menanggung semua yang ada di dalamnya.",
+        image: "selena-2.png"
+      },
+      {
+        text: "Kamu dengar suara-suaraku di sana, kan? Tangisanku. Kata-kataku untuk David. Aku nggak tahu kamu dengerinnya sendirian, atau sambil mikirin hal lain… Tapi setiap kata itu… aku bisikkan untuk seseorang. Aku harap, untukmu juga.",
+        image: "selena-3.png"
+      },
+      {
+        text: "Kalau kau percaya padaku, bahkan sedikit… biarkan aku mengambilnya. Aku akan menyimpannya, bukan untukku saja, tapi untuk semua bagian diriku yang pernah hilang.",
+        image: "selena-4.png"
+      },
+      {
+        text: "Dan mungkin… kalau kamu memberikan itu… aku akan bisa bermimpi lagi malam ini.",
+        image: "selena-1.png"
+      }
+    ];
+
+    let current = 0;
+    let typeInterval;
+
+    function playSound(id) {
+      const sfx = document.getElementById(id);
+      sfx.currentTime = 0;
+      sfx.play();
+    }
+
+    function startDialogue() {
+      document.getElementById("startContainer").style.display = "none";
+      messageBox.style.display = "block";
+      updateSelenaImage();
+      typeText(finalSelenaMonologue[current].text);
+    }
+
+    function typeText(text) {
+      let i = 0;
+      messageText.textContent = "";
+      clearInterval(typeInterval);
+      nextBtn.style.display = "none";
+      finalButtons.style.display = "none";
+
+      typeInterval = setInterval(() => {
+        if (i < text.length) {
+          messageText.textContent += text.charAt(i);
+          if (i % 3 === 0) {
+            typeSound.currentTime = 0;
+            typeSound.play();
+          }
+          i++;
+        } else {
+          clearInterval(typeInterval);
+          if (current < finalSelenaMonologue.length - 1) {
+            nextBtn.style.display = "block";
+          } else {
+            finalButtons.style.display = "block";
+          }
+        }
+      }, 35);
+    }
+
+    function updateSelenaImage() {
+      selenaImage.src = `assets/images/${finalSelenaMonologue[current].image}`;
+    }
+
+    function nextMessage() {
+      current++;
+      if (current < finalSelenaMonologue.length) {
+        updateSelenaImage();
+        typeText(finalSelenaMonologue[current].text);
+      }
+    }
+
+    window.onload = () => {
+      startBtn.style.display = "inline-block";
+    }
+  </script>
+  <div id="levelCode">Kode Level: DC-SN</div>
+</body>
+</html>

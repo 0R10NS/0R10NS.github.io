@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Deceptive Ending</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #00ff00;
+      font-family: 'Space Mono', monospace;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+
+    .narrative {
+      display: none;
+      border: 1px solid #00ff00;
+      padding: 30px;
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .narrative h1 {
+      text-align: center;
+      font-size: 28px;
+      text-shadow: 0 0 5px #00ff00;
+      margin-bottom: 30px;
+    }
+
+    .glitch {
+      position: relative;
+      color: #00ff00;
+      animation: glitch 1s infinite;
+    }
+
+    @keyframes glitch {
+      0% { text-shadow: 2px 0 red, -2px 0 blue; }
+      20% { text-shadow: -2px 0 red, 2px 0 blue; }
+      40% { text-shadow: 2px 0 red, -2px 0 blue; }
+      60% { text-shadow: -2px 0 red, 2px 0 blue; }
+      80% { text-shadow: 2px 0 red, -2px 0 blue; }
+      100% { text-shadow: 0 0 transparent; }
+    }
+
+    p {
+      margin: 20px 0;
+      min-height: 1.2em;
+    }
+
+    .popup-start {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    .popup-box {
+      background: #001100;
+      border: 2px solid #00ff00;
+      padding: 30px;
+      text-align: center;
+      color: #00ff00;
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.7);
+    }
+
+    .popup-box button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #002200;
+      border: 1px solid #00ff00;
+      color: #00ff00;
+      cursor: pointer;
+      font-family: 'Space Mono', monospace;
+    }
+
+    .popup-box button:hover {
+      background: #004400;
+    }
+
+    .back-button {
+      display: none;
+      margin: 50px auto 0;
+      padding: 14px 32px;
+      background: #001100;
+      color: #00ff00;
+      border: 2px solid #00ff00;
+      text-decoration: none;
+      font-family: 'Space Mono', monospace;
+      font-size: 16px;
+      text-align: center;
+      cursor: pointer;
+      animation: glitch 1.5s infinite;
+      box-shadow: 0 0 12px rgba(0, 255, 0, 0.5);
+      transition: transform 0.2s;
+    }
+
+    .back-button:hover {
+      background: #003300;
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="startPopup" class="popup-start">
+    <div class="popup-box">
+      <p id="popupText">1 pesan terakhir</p>
+      <button id="startBtn">Buka</button>
+    </div>
+  </div>
+
+  <div class="container" id="mainContent" style="display:none;">
+    <div class="narrative" id="narrative">
+      <h1 id="typeTitle" class="glitch"></h1>
+      <p id="line1"></p>
+      <p id="line2"></p>
+      <p id="line3"></p>
+      <p id="line4"></p>
+      <p id="line5"></p>
+      <p id="line6"></p>
+      <p id="line7"></p>
+      <p id="line8"></p>
+      <p id="line9"></p>
+      <p id="line10"></p>
+    </div>
+    <a href="index.html" id="backButton" class="back-button">Kembali ke Lobi</a>
+  </div>
+
+  <audio id="typeSound" src="assets/audio/type.mp3" preload="auto"></audio>
+  <audio id="noisySound" src="assets/audio/deceptive.mp3" preload="auto" loop></audio>
+
+  <script>
+    const startPopup = document.getElementById('startPopup');
+    const startBtn = document.getElementById('startBtn');
+    const mainContent = document.getElementById('mainContent');
+    const playerName = localStorage.getItem("playerName") || "agen tidak dikenal";
+
+    const typeSound = document.getElementById("typeSound");
+    const noisySound = document.getElementById("noisySound");
+
+    document.getElementById("popupText").innerText = `1 pesan terakhir untuk "${playerName}"`;
+
+    startBtn.addEventListener("click", () => {
+      startPopup.style.display = "none";
+      mainContent.style.display = "block";
+
+      noisySound.volume = 0.4;
+      noisySound.play();
+
+      const achievements = JSON.parse(localStorage.getItem("achievements")) || {};
+      achievements["Deceptive_ending"] = true;
+      localStorage.setItem("achievements", JSON.stringify(achievements));
+
+      showNarrative();
+    });
+
+    function typeLine(id, text, delay = 40, callback = null) {
+      const element = document.getElementById(id);
+      let index = 0;
+
+      const interval = setInterval(() => {
+        if (index < text.length) {
+          element.innerHTML += text[index];
+          try {
+            typeSound.currentTime = 0;
+            typeSound.play();
+          } catch (e) {}
+          index++;
+        } else {
+          clearInterval(interval);
+          if (callback) callback();
+        }
+      }, delay);
+    }
+
+    function fadeOutAudio(audio, duration = 3000) {
+      const step = 0.05;
+      const interval = duration / (1 / step);
+      const fade = setInterval(() => {
+        if (audio.volume > step) {
+          audio.volume -= step;
+        } else {
+          audio.volume = 0;
+          audio.pause();
+          clearInterval(fade);
+        }
+      }, interval);
+    }
+
+    function showNarrative() {
+      const name = playerName;
+      document.getElementById("typeTitle").innerHTML = "";
+      document.getElementById("narrative").style.display = "block";
+
+      const lines = [
+        `Agen telah dimanipulasi.`,
+        `Semua bukti dihapus oleh tangannya sendiri.`,
+        `Tanpa disadari, ia menekan tombol yang menutup segalanya.`,
+        ``,
+        `Protokol Orion telah dijalankan.`,
+        `Penghapusan ingatan massal tak terelakkan.`,
+        `Sinkronisasi global: dimulai...`,
+        ``,
+        `Dunia tidak akan pernah tahu.`,
+        `Dan nama ${name} akan lenyap bersama mereka yang mencoba mengingat.`
+      ];
+
+      typeLine("typeTitle", "DECEPTIVE ENDING", 70, () => {
+        let i = 0;
+        function nextLine() {
+          if (i < lines.length) {
+            typeLine(`line${i + 1}`, lines[i], 40, () => {
+              i++;
+              setTimeout(nextLine, 300);
+            });
+          } else {
+            setTimeout(() => {
+              fadeOutAudio(noisySound);
+              document.getElementById("backButton").style.display = "block";
+            }, 2000);
+          }
+        }
+        nextLine();
+      });
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>bukti</title>
+  <style>
+    body {
+      background: #000;
+      color: #0f0;
+      font-family: monospace;
+      text-align: center;
+      padding: 20px;
+      overflow: hidden;
+      animation: glitchBackground 2s infinite;
+    }
+    @keyframes glitchBackground {
+      0%, 100% { background-color: #000; }
+      50% { background-color: #111; }
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      gap: 10px;
+      justify-content: center;
+      margin: 20px auto;
+    }
+    .file {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100px;
+      height: 100px;
+      background-color: #001100;
+      border: 1px solid #0f0;
+      cursor: pointer;
+      position: relative;
+      transition: 0.2s;
+    }
+    .file:hover {
+      box-shadow: 0 0 10px #0f0;
+      transform: scale(1.05);
+    }
+    .file img {
+      width: 40px;
+      height: 40px;
+    }
+    .file span {
+      margin-top: 5px;
+      font-size: 10px;
+      color: #0f0;
+      word-break: break-word;
+      text-align: center;
+    }
+    .menu {
+      position: absolute;
+      background: white;
+      color: black;
+      border: 1px solid #ccc;
+      display: none;
+      z-index: 1000;
+      font-family: monospace;
+    }
+    .menu button {
+      display: block;
+      width: 100%;
+      background: white;
+      color: black;
+      border: none;
+      padding: 5px 10px;
+      text-align: left;
+      cursor: pointer;
+    }
+    .menu button:hover {
+      background: #eee;
+    }
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #111;
+      color: #0f0;
+      border: 1px solid #0f0;
+      padding: 20px;
+      z-index: 2000;
+      display: none;
+      max-height: 80vh;
+      width: 250px;
+      overflow-y: auto;
+      text-align: left;
+      box-shadow: 0 0 20px #0f0;
+      transition: 0.3s;
+    }
+    .footer {
+      margin-top: 50px;
+      text-align: center;
+      font-size: 12px;
+      color: #ff0202;
+    }
+    #uploadProgress {
+      width: 100%;
+      background: #000;
+      border: 1px solid #0f0;
+      height: 20px;
+      margin-top: 10px;
+      display: none;
+    }
+    #uploadBar {
+      height: 100%;
+      width: 0%;
+      background: #0f0;
+    }
+    .file.not-uploaded span {
+      color: #ff0;
+    }
+    #uploadPopup h3::after {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 14px;
+  background: #0f0;
+  margin-left: 5px;
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+#uploadBar {
+  background: linear-gradient(90deg, #0f0, #090);
+  animation: pulseBar 0.8s infinite linear;
+}
+
+@keyframes pulseBar {
+  0% { filter: brightness(100%); }
+  50% { filter: brightness(150%); }
+  100% { filter: brightness(100%); }
+}
+  </style>
+</head>
+<body>
+  <h1>Upload semua bukti ke internet</h1>
+  <div class="grid" id="fileGrid"></div>
+
+  <div class="menu" id="contextMenu"></div>
+
+  <div class="popup" id="openPopup">
+    <h3>Preview File</h3>
+    <div id="openList">Konten file ini tidak dapat ditampilkan.</div>
+    <button onclick="closePopup('openPopup')">Tutup</button>
+  </div>
+
+  <div class="popup" id="uploadPopup">
+    <h3>Mengunggah...</h3>
+    <div id="uploadProgress"><div id="uploadBar"></div></div>
+  </div>
+
+  <div class="popup" id="recoveryPopup">
+    <h3>File rusak sebagian</h3>
+    <p>Ingin mencoba memulihkannya?</p>
+    <button onclick="recoverFile()">Oke</button>
+  </div>
+
+  <audio id="buttonSound" src="assets/audio/button.mp3" preload="auto"></audio>
+  <audio id="typeSound" src="assets/audio/type.mp3" preload="auto"></audio>
+
+  <script>
+    const files = [
+      { name: "disc_cctv.enc", icon: "assets/images/disc_cctv.png", type: "bin" },
+      { name: "file-A.bin", icon: "assets/images/file-A.png", type: "bin" },
+      { name: "file-B.bin", icon: "assets/images/file-B.png", type: "bin" },
+      { name: "file-C.bin", icon: "assets/images/file-C.png", type: "bin" },
+      { name: "file-D.bin", icon: "assets/images/file-D.png", type: "bin" },
+      { name: "file-E.bin", icon: "assets/images/file-E.png", type: "bin" },
+      { name: "file-F.bin", icon: "assets/images/file-F.png", type: "bin" },
+      { name: "file-X.bin", icon: "assets/images/file-X.png", type: "bin" }
+    ];
+
+    let copiedFile = null;
+    let currentFile = null;
+    const grid = document.getElementById("fileGrid");
+    const contextMenu = document.getElementById("contextMenu");
+    const buttonSound = document.getElementById("buttonSound");
+    const typeSound = document.getElementById("typeSound");
+
+    function playSound(sound) {
+      sound.currentTime = 0;
+      sound.play().catch(() => {});
+    }
+
+    function isUploaded(name) {
+      return localStorage.getItem("uploaded_" + name) === "true";
+    }
+
+    function markUploaded(name) {
+      localStorage.setItem("uploaded_" + name, "true");
+    }
+
+    function isRecovered(name) {
+      return localStorage.getItem("recovered_" + name) === "true";
+    }
+
+    function markRecovered(name) {
+      localStorage.setItem("recovered_" + name, "true");
+    }
+
+    function allUploaded() {
+      return files.every(f => isUploaded(f.name));
+    }
+function allRequiredFilesUploaded() {
+  const required = [
+    "disc_cctv.enc",
+    "file-A.bin", "file-B.bin", "file-C.bin",
+    "file-D.bin", "file-E.bin", "file-F.bin", "file-X.bin"
+  ];
+  return required.every(name => isUploaded(name));
+}
+
+
+    function renderFiles() {
+      grid.innerHTML = "";
+      files.forEach(file => {
+        const div = document.createElement("div");
+        div.className = "file" + (isUploaded(file.name) ? "" : " not-uploaded");
+        div.dataset.name = file.name;
+        div.dataset.type = file.type;
+
+        const img = document.createElement("img");
+        img.src = file.icon;
+        const label = document.createElement("span");
+        label.textContent = file.name + (isUploaded(file.name) ? " ✓" : "");
+
+        div.appendChild(img);
+        div.appendChild(label);
+        grid.appendChild(div);
+
+        div.ondblclick = (e) => {
+          e.preventDefault();
+          playSound(buttonSound);
+          currentFile = file;
+          showMenu(e.pageX, e.pageY);
+        };
+      });
+    }
+
+    function showMenu(x, y) {
+      contextMenu.style.left = x + "px";
+      contextMenu.style.top = y + "px";
+      contextMenu.innerHTML = `
+        <button onclick="openFile()">Open</button>
+        <button onclick="renameFile()">Rename</button>
+        <button onclick="copyFile()">Copy</button>
+        <button onclick="pasteFile()">Paste</button>
+        <button onclick="deleteFile()">Delete</button>
+        <button onclick="uploadFile()">Upload</button>
+        <button onclick="closeMenu()">Close</button>
+      `;
+      contextMenu.style.display = "block";
+    }
+
+    function closeMenu() {
+      contextMenu.style.display = "none";
+    }
+
+    window.onclick = e => {
+      if (!contextMenu.contains(e.target)) closeMenu();
+    };
+
+    function openFile() {
+      playSound(buttonSound);
+      let txtName = currentFile.name.replace(/\.\w+$/, ".txt");
+
+      if (currentFile.name === "disc_cctv.enc") {
+        txtName = isRecovered("disc_cctv.enc") ? "disc_cctv_true.txt" : "disc_cctv_false.txt";
+      }
+
+      const txtFile = "assets/media/" + txtName;
+      fetch(txtFile)
+        .then(res => res.text())
+        .then(text => typeText(text))
+        .catch(() => typeText("Tidak dapat membuka file."));
+      closeMenu();
+    }
+
+    function typeText(text) {
+  const container = document.getElementById("openList");
+  container.innerHTML = "";
+  showPopup("openPopup");
+
+  const lines = text.split("\n");
+  let i = 0;
+
+  function typeNextLine() {
+    if (i < lines.length) {
+      const line = lines[i];
+      const div = document.createElement("div");
+
+      if (line.startsWith("[INVALID]")) {
+        div.innerHTML = "[-- : -- : --] [Data Rusak]";
+        div.style.color = "#f00"; // merah
+      } else {
+        div.textContent = line;
+        div.style.color = "#0f0"; // hijau
+      }
+
+      container.appendChild(div);
+      playSound(typeSound);
+      i++;
+      setTimeout(typeNextLine, 200);
+    }
+  }
+
+  typeNextLine();
+}
+
+    function renameFile() {
+      playSound(buttonSound);
+      const newName = prompt("Masukkan nama baru:", currentFile.name);
+      if (newName) {
+        currentFile.name = newName;
+        currentFile.icon = "assets/images/" + newName.replace(/\.\w+$/, "") + ".png";
+        renderFiles();
+      }
+      closeMenu();
+    }
+
+    function copyFile() {
+      playSound(buttonSound);
+      copiedFile = { ...currentFile };
+      closeMenu();
+    }
+
+    function pasteFile() {
+      playSound(buttonSound);
+      if (copiedFile) {
+        const newCopy = { ...copiedFile };
+        const baseName = copiedFile.name.replace(/\.\w+$/, "");
+        let suffix = 1;
+        while (files.some(f => f.name === `${baseName}_copy${suffix}.bin`)) suffix++;
+        newCopy.name = `${baseName}_copy${suffix}.bin`;
+        newCopy.icon = "assets/images/" + baseName + ".png";
+        files.push(newCopy);
+        renderFiles();
+      }
+      closeMenu();
+    }
+
+    function deleteFile() {
+      playSound(buttonSound);
+      const index = files.indexOf(currentFile);
+      if (index !== -1) {
+        files.splice(index, 1);
+        renderFiles();
+      }
+      closeMenu();
+    }
+
+    
+function uploadFile() {
+  playSound(buttonSound);
+
+  if (currentFile.name === "disc_cctv.enc" && !isRecovered("disc_cctv.enc")) {
+    showPopup("recoveryPopup");
+    closeMenu();
+    return;
+  }
+
+  const popup = document.getElementById("uploadPopup");
+  const bar = document.getElementById("uploadBar");
+  popup.querySelector("h3").textContent = "Mengunggah file '" + currentFile.name + "'...";
+  popup.style.display = "block";
+  bar.style.width = "0%";
+  let progress = 0;
+  const interval = setInterval(() => {
+    progress += 2;
+    bar.style.width = progress + "%";
+    playSound(typeSound);
+    if (progress >= 100) {
+      clearInterval(interval);
+      popup.style.display = "none";
+      markUploaded(currentFile.name);
+      renderFiles();
+
+      if (allRequiredFilesUploaded()) {
+        popup.querySelector("h3").textContent = "Mengalihkan...";
+        popup.style.display = "block";
+        bar.style.width = "0%";
+        let redirectProgress = 0;
+        const redirectInterval = setInterval(() => {
+          redirectProgress += 5;
+          bar.style.width = redirectProgress + "%";
+          if (redirectProgress >= 100) {
+            clearInterval(redirectInterval);
+            window.location.href = "ending-2.html";
+          }
+        }, 60);
+      }
+    }
+  }, 80);
+  closeMenu();
+}
+
+
+    function recoverFile() {
+  closePopup("recoveryPopup");
+  const popup = document.getElementById("uploadPopup");
+  const bar = document.getElementById("uploadBar");
+  popup.querySelector("h3").textContent = "Memulihkan file rusak...";
+  popup.style.display = "block";
+  bar.style.width = "0%";
+  let progress = 0;
+  const interval = setInterval(() => {
+    progress += 2;
+    bar.style.width = progress + "%";
+    playSound(typeSound);
+    if (progress >= 100) {
+      clearInterval(interval);
+      popup.style.display = "none";
+      markRecovered("disc_cctv.enc");
+      alert("Pemulihan berhasil. Silakan upload ulang file.");
+    }
+  }, 80);
+}
+
+    function closePopup(id) {
+      document.getElementById(id).style.display = "none";
+      playSound(buttonSound);
+    }
+
+    function showPopup(id) {
+      document.getElementById(id).style.display = "block";
+    }
+
+    renderFiles();
+  </script>
+
+  <div class="footer">Kode Level: DS-BUKTI</div>
+</body>
+</html>

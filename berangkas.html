@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Kombinasi Retro Vault</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -46,29 +47,18 @@
     }
 
     .column {
-      margin: 0 5px;
+      margin: 0 10px;
       text-align: center;
     }
 
-    .triangle {
-      width: 0;
-      height: 0;
-      border-left: 30px solid transparent;
-      border-right: 30px solid transparent;
+    .icon-btn {
+      color: #f0f;
+      font-size: 24px;
       cursor: pointer;
+      transition: transform 0.1s ease-in-out;
     }
 
-    .triangle.up {
-      border-bottom: 35px solid #f0f;
-      margin-bottom: 10px;
-    }
-
-    .triangle.down {
-      border-top: 35px solid #f0f;
-      margin-top: 10px;
-    }
-
-    .triangle:active {
+    .icon-btn:active {
       transform: scale(0.9);
     }
 
@@ -83,6 +73,7 @@
       position: relative;
       overflow: hidden;
       display: inline-block;
+      margin: 8px 0;
     }
 
     .letter-content {
@@ -90,6 +81,12 @@
       top: 5px;
       width: 100%;
       transition: top 0.2s ease-in-out;
+    }
+
+    .label {
+      font-size: 10px;
+      margin-top: 4px;
+      color: #aaa;
     }
 
     #enterBtn {
@@ -140,32 +137,94 @@
       0% { filter: hue-rotate(0deg); }
       100% { filter: hue-rotate(30deg); }
     }
+
+    #levelCode {
+      position: absolute;
+      bottom: 10px;
+      right: 20px;
+      font-size: 10px;
+      opacity: 1;
+      color: #f00;
+    }
+    #popupModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modal-content {
+  background: #000;
+  border: 2px solid #0ff;
+  box-shadow: 0 0 10px #0ff, 0 0 20px #f0f;
+  padding: 30px;
+  text-align: center;
+  max-width: 400px;
+  color: #0ff;
+  font-size: 12px;
+  font-family: 'Press Start 2P', monospace;
+}
+
+.modal-content button {
+  margin-top: 20px;
+  padding: 10px 25px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  background-color: #0f0;
+  color: #000;
+  border: 2px solid #0ff;
+  box-shadow: 0 0 8px #0ff;
+  cursor: pointer;
+}
+.modal-content button:hover {
+  background-color: #0ff;
+  color: #000;
+}
   </style>
 </head>
 <body>
 
 <div class="glitch"></div>
-
+<div id="popupModal">
+  <div class="modal-content">
+    <p><strong>Cara Main:</strong><br><br>
+      Gunakan ikon panah atas & bawah untuk mengganti huruf.<br>
+      Susun kombinasi yang benar, lalu tekan <em>Enter</em>.<br><br>
+      Kombinasi tertentu akan membuka jalan rahasia. Good luck!
+    </p>
+    <button onclick="closeModal()">Siap!</button>
+  </div>
+</div>
 <div class="panel">
   <div class="column">
-    <div class="triangle up" onclick="changeLetter(0, 1)"></div>
+    <i class="fa-solid fa-chevron-up icon-btn" onclick="changeLetter(0, 1)"></i>
     <div class="letter-box"><div class="letter-content" id="letter0">S</div></div>
-    <div class="triangle down" onclick="changeLetter(0, -1)"></div>
+    <i class="fa-solid fa-chevron-down icon-btn" onclick="changeLetter(0, -1)"></i>
+    <div class="label">Huruf 1</div>
   </div>
   <div class="column">
-    <div class="triangle up" onclick="changeLetter(1, 1)"></div>
+    <i class="fa-solid fa-chevron-up icon-btn" onclick="changeLetter(1, 1)"></i>
     <div class="letter-box"><div class="letter-content" id="letter1">T</div></div>
-    <div class="triangle down" onclick="changeLetter(1, -1)"></div>
+    <i class="fa-solid fa-chevron-down icon-btn" onclick="changeLetter(1, -1)"></i>
+    <div class="label">Huruf 2</div>
   </div>
   <div class="column">
-    <div class="triangle up" onclick="changeLetter(2, 1)"></div>
+    <i class="fa-solid fa-chevron-up icon-btn" onclick="changeLetter(2, 1)"></i>
     <div class="letter-box"><div class="letter-content" id="letter2">F</div></div>
-    <div class="triangle down" onclick="changeLetter(2, -1)"></div>
+    <i class="fa-solid fa-chevron-down icon-btn" onclick="changeLetter(2, -1)"></i>
+    <div class="label">Huruf 3</div>
   </div>
   <div class="column">
-    <div class="triangle up" onclick="changeLetter(3, 1)"></div>
+    <i class="fa-solid fa-chevron-up icon-btn" onclick="changeLetter(3, 1)"></i>
     <div class="letter-box"><div class="letter-content" id="letter3">U</div></div>
-    <div class="triangle down" onclick="changeLetter(3, -1)"></div>
+    <i class="fa-solid fa-chevron-down icon-btn" onclick="changeLetter(3, -1)"></i>
+    <div class="label">Huruf 4</div>
   </div>
 </div>
 
@@ -178,10 +237,11 @@
   </div>
 </div>
 
+<div id="levelCode">Kode Level: LOCKER</div>
+
 <audio id="typeSound" src="assets/audio/type.mp3" preload="auto"></audio>
 <audio id="alertSound" src="assets/audio/alert.mp3" preload="auto"></audio>
 <audio id="enterSound" src="assets/audio/button.mp3" preload="auto"></audio>
-
 
 <script>
   const letters = ['S', 'T', 'F', 'U'];
@@ -195,28 +255,20 @@
   const enterSound = document.getElementById('enterSound');
   const alertSound = document.getElementById('alertSound');
 
-  const bannedCombos = [
-  "FUCK", "DICK", "KNTL", "LNTE", "JNCK", "NIGA", "GAYY", "WOWO", "BIBD",
-  "BTCH", "PELI", "MEKI", "TAIK", "ANJG", "BGST", "PKMK", "KMPR", "PNTK",
-  "NGNT", "JMBT", "PLER", "PSTU", "MBUT", "JANC", "KIMK", "NGTD", "BODO",
-  "LOKO", "TULI",
-  "CUNT", "SLUT", "HOES", "FAGG", "TWAT", "JERK", "DUMB", "POOP", "SHIT",
-  "CRAP", "SUCK", "HELL", "ARSE", "PISS", "MOFO", "NUTS", "BUTT", "BOOB"
-];
+  const bannedCombos = ["FUCK", "DICK", "KNTL", "LNTE", "JNCK", "NIGA", "GAYY", "WOWO", "BIBD", "BABI", "PORN", "ANAL", "ANUS", "BTCH", "PELI", "MEKI", "TAIK", "ANJG", "BGST", "PKMK", "KMPR", "PNTK", "XNXX", "NGNT", "JMBT", "PLER", "MBUT", "JANC", "KIMK", "NGTD", "BODO", "LOKO", "TULI", "CUNT", "SLUT", "HOES", "FAGG", "TWAT", "JERK", "DUMB", "POOP", "SHIT", "CRAP", "SUCK", "HELL", "ARSE", "PISS", "MOFO", "NUTS", "BUTT", "BOOB"];
   const redirectCombos = {
     "TIME": "jam.html",
     "LOBI": "index.html",
     "BALL": "run.html",
-    "PCYG": "level-6b.html"
+    "CHAT": "komentar.html",
+    "DVID": "level-6b.html"
   };
 
   function changeLetter(index, direction) {
     let charCode = letters[index].charCodeAt(0);
     charCode += direction;
-
     if (charCode > 90) charCode = 65;
     if (charCode < 65) charCode = 90;
-
     letters[index] = String.fromCharCode(charCode);
 
     typeSound.currentTime = 0;
@@ -267,11 +319,12 @@
 
     alertSound.currentTime = 0;
     alertSound.play();
-
-    if (navigator.vibrate) {
-      navigator.vibrate([200, 100, 200]);
-    }
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
   }
+  
+  function closeModal() {
+  document.getElementById('popupModal').style.display = 'none';
+}
 </script>
 
 </body>

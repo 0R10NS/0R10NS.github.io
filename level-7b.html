@@ -1,0 +1,34 @@
+<!DOCTYPE html>  <html lang="id">  
+<head>  
+  <meta charset="UTF-8">  
+  <title>Level 7b</title>  
+  <link rel="stylesheet" href="styles-level-7b.css">  
+</head>  
+<body>  
+  <div id="intro">  
+    <h2>"Baiklah... jika kamu tidak menyerahkannya… akan aku ambil paksa."</h2>  
+    <img src="assets/images/selena-aim.png" alt="Selena" width="160"><br><br>  
+    <button class="lawan" onclick="startGame()">Lawan</button>  
+  </div>    <div id="hud">  
+    <div class="health-bar"><div id="playerHealth" class="health" style="background:#0f0;"></div></div>  
+    <div class="health-bar"><div id="selenaHealth" class="health" style="background:#f00;"></div></div>  
+  </div>    <div id="arena"></div>    <div id="controls">  
+    <button class="control-btn" onclick="moveLeft()">Я</button>  
+    <button class="control-btn" onclick="shootBullet()">Ж</button>  
+    <button class="control-btn" onclick="moveRight()">R</button>  
+  </div>    <div id="popup" class="popup" style="display:none;">  
+  <div class="popup-content">  
+    <p id="popup-text"></p>  
+    <button onclick="closePopup()">Oke</button>  
+  </div>  
+</div>  
+  <!-- Sound Effects -->  
+  <audio id="alertSound" src="assets/audio/get.mp3"></audio>  
+  <audio id="shootSound" src="assets/audio/shoot.mp3" auto></audio>  
+  <audio id="hitSound" src="assets/audio/flesh.mp3"></audio>  
+  <audio id="enemyShootSound" src="assets/audio/enemy-shoot.mp3" auto></audio>  
+  <audio id="monsterTransformSound" src="assets/audio/haha.mp3"></audio>
+  <audio id="bgm" src="assets/audio/bgm.mp3" loop></audio>
+  <script src="script-level-7b.js"></script>
+</body>
+</html>

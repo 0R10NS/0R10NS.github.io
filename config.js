@@ -1,0 +1,2 @@
+const BASE_URL = "https://hnwcewqtiotmlpltoowi.supabase.co/rest/v1";
+const API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhud2Nld3F0aW90bWxwbHRvb3dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY2Njc4MTcsImV4cCI6MjA2MjI0MzgxN30.aWJtBV0QlPx3AvLOLGfn_1UX2iODO8ijwxz2xD_kyJ4";

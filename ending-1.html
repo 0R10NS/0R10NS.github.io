@@ -107,37 +107,51 @@
   }
 
   function startLoading() {
-    const name = document.getElementById("username").value.trim() || "Subjek Tidak Dikenal";
+  const inputName = document.getElementById("username").value.trim();
 
-    // Validasi nama yang tidak boleh dipakai
-    const forbiddenPatterns = [/[\d]/, /alven/i, /ried/i, /selena/i, /anonim/i, /anonymous/i, /username/i];
-    for (let pattern of forbiddenPatterns) {
-      if (pattern.test(name)) {
-        alert("Kamu sudah mati sebelumnya");
-        location.href = "index.html";
-        return;
-      }
-    }
-
-    playSound("buttonSound");
-    document.getElementById("loginForm").style.display = "none";
-    document.getElementById("loadingBarContainer").style.display = "flex";
-
-    let progress = 0;
-    const interval = setInterval(() => {
-      if (progress >= 100) {
-        clearInterval(interval);
-        document.getElementById("loadingBarContainer").style.display = "none";
-        document.getElementById("popup").style.display = "flex";
-        playSound("alertSound");
-      } else {
-        progress++;
-        document.getElementById("loadingProgress").style.width = progress + "%";
-      }
-    }, 30);
-
-    window.finalName = name;
+  if (!inputName) {
+    alert("Nama tidak boleh kosong!");
+    return;
   }
+
+  const forbiddenPatterns = [/[\d]/, /alven/i, /ried/i, /selena/i, /anonim/i, /anonymous/i, /username/i];
+  for (let pattern of forbiddenPatterns) {
+    if (pattern.test(inputName)) {
+      alert("Kamu sudah mati sebelumnya");
+      location.href = "ending-1.html";
+      return;
+    }
+  }
+
+  const storedName = localStorage.getItem("playerName");
+
+  if (storedName && storedName !== inputName) {
+    alert("Nama salah!");
+    return;
+  }
+
+  if (!storedName) {
+    localStorage.setItem("playerName", inputName);
+  }
+
+  window.finalName = inputName;
+  playSound("buttonSound");
+  document.getElementById("loginForm").style.display = "none";
+  document.getElementById("loadingBarContainer").style.display = "flex";
+
+  let progress = 0;
+  const interval = setInterval(() => {
+    if (progress >= 100) {
+      clearInterval(interval);
+      document.getElementById("loadingBarContainer").style.display = "none";
+      document.getElementById("popup").style.display = "flex";
+      playSound("alertSound");
+    } else {
+      progress++;
+      document.getElementById("loadingProgress").style.width = progress + "%";
+    }
+  }, 30);
+}
 
   function typeWriter(text, elementId, speed = 50) {
     let i = 0;
@@ -157,13 +171,26 @@
   }
 
   function showFinalPopup() {
-    playSound("buttonSound");
-    const text = `ALERT KEAMANAN\n-----------------------------\nNama: ${window.finalName}\nStatus: TERTANGKAP\n\nSubjek telah mengakses sistem terlarang dan mencoba mengunduh arsip Proyek Orion.\n\nUnit pengamanan telah mengamankan ${window.finalName} di sektor fasilitas utama.\n\nDr. Ried telah dinyatakan hilang dan kemungkinan besar melarikan diri dengan membawa salinan data.\n\nProyek Orion tetap berlanjut.\nTidak ada yang akan tahu kebenarannya.`;
+  playSound("buttonSound");
 
-    document.getElementById("popup").style.display = "none";
-    document.getElementById("finalPopup").style.display = "flex";
-    document.getElementById("finalText").value = ""; // Clear sebelum mulai mengetik
-    typeWriter(text, "finalText", 50); // speed = 50ms per karakter
-  }
+  // Ambil data achievements dari localStorage
+  const achievements = JSON.parse(localStorage.getItem("achievements")) || {};
+  // Tambahkan Bad_ending
+  achievements["Bad_ending"] = true;
+  // Simpan kembali ke localStorage
+  localStorage.setItem("achievements", JSON.stringify(achievements));
+
+  const text = `ALERT KEAMANAN\n-----------------------------\nNama: ${window.finalName}\nStatus: TERTANGKAP\n\nSubjek telah mengakses sistem terlarang dan mencoba mengunduh arsip Proyek Orion.\n\nUnit pengamanan telah mengamankan ${window.finalName} di sektor fasilitas utama.\n\nDr. Ried telah dinyatakan hilang dan kemungkinan besar melarikan diri dengan membawa salinan data.\n\nProyek Orion tetap berlanjut.\nTidak ada yang akan tahu kebenarannya.`;
+
+  document.getElementById("popup").style.display = "none";
+  document.getElementById("finalPopup").style.display = "flex";
+  document.getElementById("finalText").value = ""; // Clear sebelum mulai mengetik
+  typeWriter(text, "finalText", 50); // speed = 50ms per karakter
+}
+  
+  // Simpan data ke localStorage saat halaman dimuat
+window.addEventListener("DOMContentLoaded", () => {
+  localStorage.setItem("item_level_Virus_Weakener", "item untuk level FSS5A2");
+});
 </script></body>
 </html>
