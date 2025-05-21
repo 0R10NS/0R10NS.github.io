@@ -135,7 +135,7 @@
 </head>
 <body>
   <h1>Desktop</h1>
-  <p>Temukan file yang perlu dihapus.</p>
+  <p id="instructionText">Temukan file yang perlu dihapus.</p>
   <div class="grid" id="fileGrid"></div>  <div id="popupNotification">
     <p id="popupMessage"></p>
     <button onclick="closePopup()">OK</button>
@@ -165,12 +165,19 @@
   </div><audio id="buttonSound" src="assets/audio/button.mp3" preload="auto"></audio> <audio id="alertSound" src="assets/audio/alert.mp3" preload="auto"></audio>
 
   <script>
-  const files = [
-    { name: "rekaman.kst", icon: "assets/images/recorder.png", type: "rekaman" },
-    { name: "recycle.bin", icon: "assets/images/tong.png", type: "trash" },
-    { name: "mini_game.exe", icon: "assets/images/file.png", type: "game" },
-    { name: "kelola_memori", icon: "assets/images/folder.png", type: "folder" }
-  ];
+  
+const files = [];
+
+if (localStorage.getItem("rekamanTerhapus") !== "true") {
+  files.push({ name: "rekaman.kst", icon: "assets/images/recorder.png", type: "rekaman" });
+}
+
+files.push(
+  { name: "recycle.bin", icon: "assets/images/tong.png", type: "trash" },
+  { name: "mini_game.exe", icon: "assets/images/file.png", type: "game" },
+  { name: "kelola_memori", icon: "assets/images/folder.png", type: "folder" }
+);
+
 
   const grid = document.getElementById("fileGrid");
   const buttonSound = document.getElementById("buttonSound");
@@ -243,6 +250,7 @@
             showPopup("Selena.kst berhasil terhapus.");
             rekamanTerhapus = true;
             dragging.remove();
+            localStorage.setItem("rekamanTerhapus", "true");
           } else {
             showPopup("Recycle Bin penuh. Tidak bisa menghapus file.", true);
             document.getElementById("openTrash").style.display = "inline-block";
@@ -436,6 +444,12 @@
       }
     }, 30);
   }
+
+const instruction = document.getElementById("instructionText");
+if (localStorage.getItem("all_evidence_file") === "true") {
+  instruction.textContent = "Buka folder bukti dan upload semua data ke internet.";
+}
+
 </script>
 <div class="footer">Kode Level: DS4B1</div>
 </body>
